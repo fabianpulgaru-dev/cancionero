@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cancionero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#212b21;
+    --board-deep:#171f17;
+    --board-panel:#2a3529;
+    --chalk:#f3eee1;
+    --chalk-dim:#b9b6a6;
+    --gold:#e3ab3d;
+    --clay:#c1503c;
+    --sky:#7fa3c4;
+    --line: rgba(243,238,225,.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(227,171,61,.06), transparent 45%),
+      radial-gradient(ellipse at 85% 100%, rgba(127,163,196,.06), transparent 50%),
+      var(--board);
+    color:var(--chalk);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:.05; mix-blend-mode:screen;
+    background-image:
+      radial-gradient(circle at 20% 30%, #fff 0.5px, transparent 0.6px),
+      radial-gradient(circle at 60% 70%, #fff 0.5px, transparent 0.6px),
+      radial-gradient(circle at 80% 20%, #fff 0.5px, transparent 0.6px),
+      radial-gradient(circle at 40% 85%, #fff 0.5px, transparent 0.6px);
+    background-size: 140px 140px;
+  }
+  .app{max-width:760px; margin:0 auto; padding:22px 18px 60px; position:relative; z-index:1;}
+
+  .bunting{display:flex; justify-content:center; gap:3px; margin-bottom:2px; padding:0 4px;}
+  .bunting span{width:14px; height:16px; clip-path: polygon(0 0, 100% 0, 50% 100%);}
+  .bunting span:nth-child(4n+1){background:var(--gold);}
+  .bunting span:nth-child(4n+2){background:var(--clay);}
+  .bunting span:nth-child(4n+3){background:var(--sky);}
+  .bunting span:nth-child(4n){background:var(--chalk-dim);}
+
+  header.top{padding:6px 0 16px; text-align:center; border-bottom:1px solid var(--line); margin-bottom:18px;}
+  header.top h1{font-family:'Caveat', cursive; font-weight:700; font-size:clamp(34px,7vw,50px); margin:2px 0 0; color:var(--chalk); letter-spacing:.01em;}
+  header.top p{margin:2px 0 12px; color:var(--chalk-dim); font-size:14px;}
+
+  nav.tabs{display:flex; justify-content:center; gap:6px; margin-top:6px;}
+  nav.tabs button{background:transparent; border:1px solid var(--line); color:var(--chalk-dim); padding:7px 16px; border-radius:20px; font-family:'Work Sans',sans-serif; font-size:13.5px; cursor:pointer; transition:all .15s ease;}
+  nav.tabs button.active{background:var(--gold); color:var(--board-deep); border-color:var(--gold); font-weight:600;}
+  nav.tabs button:hover:not(.active){border-color:var(--chalk-dim); color:var(--chalk);}
+
+  button{font-family:'Work Sans',sans-serif; cursor:pointer;}
+  .btn{border:1.5px solid var(--chalk); background:transparent; color:var(--chalk); padding:9px 15px; border-radius:6px; font-size:14px; transition:all .15s ease;}
+  .btn:hover{background:rgba(243,238,225,.08);}
+  .btn.primary{background:var(--gold); border-color:var(--gold); color:var(--board-deep); font-weight:600;}
+  .btn.primary:hover{background:#f0ba52;}
+  .btn.small{padding:5px 11px; font-size:12.5px; border-radius:5px;}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  .chat-wrap{display:flex; flex-direction:column; min-height:50vh;}
+  .chat-log{flex:1; display:flex; flex-direction:column; gap:14px; margin-bottom:16px;}
+  .bubble{max-width:88%; padding:13px 16px; border-radius:12px; line-height:1.55; font-size:14.5px;}
+  .bubble.assistant{background:var(--board-panel); border:1px solid var(--line); align-self:flex-start; border-top-left-radius:3px;}
+  .bubble.user{background:rgba(227,171,61,.14); border:1px solid rgba(227,171,61,.4); color:var(--chalk); align-self:flex-end; border-top-right-radius:3px;}
+  .source-card{display:block; text-decoration:none; background:var(--board-deep); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:8px; color:var(--chalk);}
+  .source-card:hover{border-color:var(--gold);}
+  .source-card .dom{color:var(--sky); font-size:11.5px; font-family:'IBM Plex Mono',monospace;}
+  .source-card .ttl{font-size:14px; margin-top:2px;}
+  .paste-box{margin-top:12px;}
+  .paste-box textarea{width:100%; min-height:120px; background:var(--board-deep); border:1.5px solid var(--line); border-radius:8px; color:var(--chalk); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:11px; line-height:1.7; resize:vertical;}
+  .paste-actions{display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap;}
+  .status-line{font-size:12.5px; color:var(--sky); font-style:italic;}
+  .status-line.error{color:var(--clay);}
+
+  .chat-input{display:flex; gap:8px; position:sticky; bottom:0; padding-top:10px; background:linear-gradient(to top, var(--board) 60%, transparent);}
+  .chat-input input{flex:1; background:var(--board-panel); border:1.5px solid var(--line); border-radius:24px; padding:12px 18px; color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:14.5px;}
+  .chat-input input:focus{outline:none; border-color:var(--gold);}
+  .chat-input button{border-radius:50%; width:44px; height:44px; padding:0; flex:0 0 auto; font-size:18px;}
+
+  .repertorio-bar{display:flex; gap:7px; margin-bottom:16px; flex-wrap:wrap; align-items:center;}
+  .rep-pill{display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:18px; padding:6px 8px 6px 14px; background:var(--board-panel); cursor:pointer; transition:all .15s ease;}
+  .rep-pill.active{border-color:var(--gold); background:rgba(227,171,61,.12);}
+  .rep-pill span.name{font-size:13.5px; color:var(--chalk);}
+  .rep-pill.active span.name{color:var(--gold); font-weight:600;}
+  .rep-pill .rep-x{font-size:11px; color:var(--chalk-dim); border:1px solid var(--line); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center;}
+  .rep-pill .rep-x:hover{color:var(--clay); border-color:var(--clay);}
+  .rep-add{border:1px dashed var(--line); border-radius:18px; padding:6px 14px; background:transparent; color:var(--chalk-dim); font-size:13.5px; cursor:pointer;}
+  .rep-add:hover{border-color:var(--gold); color:var(--gold);}
+  select.chat-select{background:var(--board-deep); border:1.5px solid var(--line); border-radius:6px; color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:13px; padding:7px 9px; margin-bottom:6px; width:100%;}
+
+  .rep-subtabs{display:flex; gap:6px; margin-bottom:14px;}
+  .rep-subtabs button{background:transparent; border:1px solid var(--line); color:var(--chalk-dim); padding:6px 13px; border-radius:16px; font-size:13px;}
+  .rep-subtabs button.active{background:var(--sky); border-color:var(--sky); color:var(--board-deep); font-weight:600;}
+
+  .ritmo-chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+  .ritmo-chip{border:1px solid var(--line); border-radius:14px; padding:4px 11px; font-size:12.5px; color:var(--chalk-dim); cursor:pointer; background:transparent;}
+  .ritmo-chip.active{border-color:var(--clay); color:var(--clay); background:rgba(193,80,60,.1);}
+
+  .star-btn{background:transparent; border:none; font-size:17px; cursor:pointer; color:var(--chalk-dim); line-height:1; padding:2px;}
+  .star-btn.on{color:var(--gold);}
+
+  .setlist-row{display:flex; align-items:center; gap:10px; background:var(--board-panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px;}
+  .setlist-row .num{font-family:'IBM Plex Mono',monospace; color:var(--sky); font-size:13px; width:20px;}
+  .setlist-row .info{flex:1; cursor:pointer;}
+  .setlist-row .info h4{margin:0; font-family:'Caveat',cursive; font-size:20px; color:var(--gold); font-weight:700;}
+  .setlist-row .info span{font-size:12px; color:var(--chalk-dim);}
+  .setlist-row .ctrls{display:flex; gap:4px;}
+  .setlist-row .ctrls button{width:26px; height:26px; padding:0; border-radius:5px; font-size:12px;}
+
+  .key-jump{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .key-jump select{background:var(--board-panel); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:5px 8px;}
+
+  .autoscroll-bar{display:flex; align-items:center; gap:10px; background:var(--board-panel); border:1px solid var(--line); border-radius:22px; padding:6px 14px; margin-bottom:14px; flex-wrap:wrap;}
+  .autoscroll-bar input[type="range"]{accent-color:var(--gold); width:110px;}
+  .autoscroll-bar .lbl{font-size:12px; color:var(--chalk-dim);}
+
+  .perf-nav{display:flex; gap:8px;}
+
+  #printSheet{display:none;}
+
+  .toolbar{display:flex; gap:10px; margin-bottom:16px;}
+  .toolbar input{flex:1; padding:10px 14px; border-radius:8px; border:1.5px solid var(--line); background:var(--board-panel); color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:14px;}
+  .song-list{display:flex; flex-direction:column; gap:10px;}
+  .placard{position:relative; background:var(--board-panel); border:1px solid var(--line); border-radius:8px; padding:16px 16px 14px; cursor:pointer; transition:border-color .15s ease;}
+  .placard:hover{border-color:var(--gold);}
+  .placard::before{content:""; position:absolute; top:-5px; left:50%; transform:translateX(-50%); width:10px; height:10px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 2px var(--board-deep);}
+  .placard h3{font-family:'Caveat', cursive; font-weight:700; font-size:24px; margin:0 0 4px; color:var(--gold);}
+  .placard .sub{font-size:13px; color:var(--chalk-dim); display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .placard .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:2px 7px; border:1px solid var(--line); border-radius:4px;}
+  .placard .row-actions{position:absolute; top:12px; right:12px; display:flex; gap:6px;}
+  .empty{text-align:center; padding:50px 20px; color:var(--chalk-dim); border:1px dashed var(--line); border-radius:10px;}
+
+  .detail-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
+  .transpose{display:flex; align-items:center; gap:6px; background:var(--board-panel); border:1px solid var(--line); border-radius:22px; padding:4px 6px;}
+  .transpose button{border-radius:50%; width:28px; height:28px; padding:0; line-height:1; background:transparent; border:1px solid var(--line); color:var(--chalk);}
+  .transpose .val{font-family:'IBM Plex Mono',monospace; font-size:13px; min-width:34px; text-align:center;}
+
+  .chart{background:var(--board-deep); border:1px solid var(--line); border-radius:10px; padding:26px 28px;}
+  .chart h2{font-family:'Caveat',cursive; font-weight:700; margin:0 0 2px; font-size:34px; color:var(--gold);}
+  .chart .byline{color:var(--chalk-dim); font-size:14px; margin-bottom:16px;}
+  .chordline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:var(--sky); font-weight:600; font-size:14px; line-height:1; margin:0;}
+  .lyricline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:var(--chalk); font-size:14.5px; line-height:1.9; margin:0 0 2px;}
+  .lyricline.blank{height:14px;}
+  .stage-mode .chart{padding:40px;}
+  .stage-mode .chart h2{font-size:44px;}
+  .stage-mode .chordline{font-size:21px;}
+  .stage-mode .lyricline{font-size:21px; line-height:2.15;}
+
+  .overlay{position:fixed; inset:0; background:rgba(10,14,10,.65); display:flex; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; z-index:50;}
+  .modal{background:var(--board-panel); border:1px solid var(--line); border-radius:12px; max-width:600px; width:100%; padding:24px; margin-bottom:40px;}
+  .modal h2{font-family:'Caveat',cursive; font-size:26px; color:var(--gold); margin:0 0 16px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--chalk-dim); margin-bottom:5px;}
+  .field input, .field textarea{width:100%; padding:9px 11px; border:1.5px solid var(--line); border-radius:6px; background:var(--board-deep); color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:14px;}
+  .field textarea{font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.7;}
+  .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+
+  footer.foot{text-align:center; margin-top:30px; font-size:12px; color:var(--chalk-dim);}
+
+  @media print{
+    body{background:#fff; color:#000;}
+    body::before{display:none;}
+    .no-print, #root{display:none !important;}
+    #printSheet{display:block !important;}
+    .print-cover{min-height:90vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; page-break-after:always;}
+    .print-cover h1{font-family:'Caveat',cursive; font-size:64px; color:#7a1f2b; margin:0;}
+    .print-cover p{color:#555; font-size:16px; margin-top:8px;}
+    .print-toc{page-break-after:always;}
+    .print-toc h2{font-family:'Caveat',cursive; color:#7a1f2b; font-size:30px;}
+    .print-toc ol{font-size:15px; line-height:2;}
+    .print-chart{page-break-inside:avoid; page-break-after:always; padding-top:10px;}
+    .print-chart:last-child{page-break-after:auto;}
+    .print-chart h2{font-family:'Caveat',cursive; font-weight:700; color:#7a1f2b; font-size:32px; margin:0 0 2px;}
+    .print-chart .byline{color:#555; font-size:14px; margin-bottom:14px;}
+    .print-chordline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:#7a1f2b; font-weight:600; font-size:14px; line-height:1; margin:0;}
+    .print-lyricline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:#000; font-size:14.5px; line-height:1.9; margin:0 0 2px;}
+    .print-lyricline.blank{height:14px;}
+  }
+  @media (max-width:560px){ .row3{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="root" class="app">Cargando cancionero…</div>
+<div id="printSheet"></div>
+
+<script>
+(function(){
+  "use strict";
+  const STORAGE_KEY = "songs";
+  const REP_KEY = "repertorios";
+  const API_KEY_LS = "cancionero_openai_key";
+  const WORKER_URL_LS = "cancionero_worker_url";
+  const RITMOS = ["Cueca","Tonada","Vals","Balada","Cumbia","Rock/Pop","Otro"];
+  const root = document.getElementById("root");
+
+  // Storage works two ways: inside Claude (window.storage, shared automáticamente),
+  // o standalone/GitHub Pages (localStorage, por navegador — usa Exportar/Importar para sincronizar).
+  const hasClaudeStorage = (typeof window.storage !== "undefined") && window.storage && typeof window.storage.get === "function";
+  const storageAdapter = hasClaudeStorage ? window.storage : {
+    async get(key){
+      try{ const raw = localStorage.getItem("cancionero_"+key); return raw!=null ? {key, value: raw} : null; }
+      catch(e){ return null; }
+    },
+    async set(key, value){
+      try{ localStorage.setItem("cancionero_"+key, value); return {key, value}; }
+      catch(e){ return null; }
+    },
+  };
+
+  function getApiKey(){ try{ return localStorage.getItem(API_KEY_LS) || ""; }catch(e){ return ""; } }
+  function setApiKey(k){ try{ localStorage.setItem(API_KEY_LS, k); }catch(e){} }
+  function getWorkerUrl(){ try{ return localStorage.getItem(WORKER_URL_LS) || ""; }catch(e){ return ""; } }
+  function setWorkerUrl(u){ try{ localStorage.setItem(WORKER_URL_LS, u); }catch(e){} }
+
+  let state = {
+    songs: [],
+    repertorios: [],
+    activeRepertorioId: null,
+    repSubview: "todas",     // todas | setlist
+    ritmoFilter: null,
+    loaded: false,
+    view: "chat",
+    activeId: null,
+    perf: null,               // {ids:[...], index} when navigating within a set list
+    transpose: 0,
+    preferFlat: false,
+    stageMode: false,
+    autoScroll: false,
+    scrollSpeed: 30,          // px/sec
+    search: "",
+    messages: [
+      {role:"assistant", kind:"text", text:"Hola 👋 Dime qué canción quieres tocar, por ejemplo: “quiero tocar Vamos los dos de Chinoy”. Busco las mejores páginas con la letra y acordes para que las abras, copies y pegues aquí — yo la formateo, tú eliges a qué repertorio va, y la agrego."}
+    ],
+    pending: null,
+    busy: false,
+  };
+
+  async function loadSongs(){
+    try{
+      const res = await storageAdapter.get(STORAGE_KEY, true);
+      state.songs = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ state.songs = []; }
+    try{
+      const repRes = await storageAdapter.get(REP_KEY, true);
+      state.repertorios = repRes && repRes.value ? JSON.parse(repRes.value) : [];
+    }catch(e){ state.repertorios = []; }
+
+    let repChanged = false;
+    if(state.repertorios.length === 0){
+      state.repertorios = [{id:"r-fiestas-patrias", name:"Fiestas Patrias", setlist:[]}];
+      repChanged = true;
+    }
+    state.repertorios.forEach(r=>{ if(!Array.isArray(r.setlist)){ r.setlist = []; repChanged = true; } });
+    state.activeRepertorioId = state.repertorios[0].id;
+
+    let songsChanged = false;
+    state.songs.forEach(s=>{
+      if(!s.repertorioId){ s.repertorioId = state.repertorios[0].id; songsChanged = true; }
+      if(s.ritmo === undefined){ s.ritmo = ""; songsChanged = true; }
+    });
+
+    state.loaded = true;
+    render();
+    if(repChanged) await saveRepertorios();
+    if(songsChanged) await saveSongs();
+  }
+  async function saveSongs(){
+    try{
+      const ok = await storageAdapter.set(STORAGE_KEY, JSON.stringify(state.songs), true);
+      if(!ok) console.error("No se pudo guardar.");
+    }catch(e){ console.error("Error guardando:", e); }
+  }
+  async function saveRepertorios(){
+    try{
+      const ok = await storageAdapter.set(REP_KEY, JSON.stringify(state.repertorios), true);
+      if(!ok) console.error("No se pudo guardar repertorios.");
+    }catch(e){ console.error("Error guardando repertorios:", e); }
+  }
+
+  function parseChordProLine(line){
+    let lyric = ""; let chordPositions = []; let i = 0;
+    while(i < line.length){
+      if(line[i] === "["){
+        const end = line.indexOf("]", i);
+        if(end === -1){ lyric += line[i]; i++; continue; }
+        chordPositions.push({pos: lyric.length, chord: line.slice(i+1, end)});
+        i = end + 1;
+      } else { lyric += line[i]; i++; }
+    }
+    let chordChars = [];
+    chordPositions.forEach(cp=>{ for(let k=0;k<cp.chord.length;k++){ chordChars[cp.pos+k] = cp.chord[k]; } });
+    let maxLen = Math.max(lyric.length, chordChars.length);
+    let chordStr = "";
+    for(let k=0;k<maxLen;k++){ chordStr += chordChars[k] || " "; }
+    return {chordStr: chordStr.replace(/\s+$/,""), lyricStr: lyric};
+  }
+  const NOTES_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const NOTES_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+  const SOLFEGE_TO_LETTER = {Do:'C', Re:'D', Mi:'E', Fa:'F', Sol:'G', La:'A', Si:'B'};
+  const LETTER_TO_SOLFEGE = {C:'Do', D:'Re', E:'Mi', F:'Fa', G:'Sol', A:'La', B:'Si'};
+
+  function normalizeAcc(a){ if(a==='♯') return '#'; if(a==='♭') return 'b'; return a||''; }
+
+  function parseNoteToken(token){
+    let m = token.match(/^(Sol|Do|Re|Mi|Fa|La|Si)(#|b|♯|♭)?(.*)$/);
+    if(m) return {root:m[1], acc:normalizeAcc(m[2]), rest:m[3], type:"solfege"};
+    m = token.match(/^([A-G])(#|b|♯|♭)?(.*)$/);
+    if(m) return {root:m[1], acc:normalizeAcc(m[2]), rest:m[3], type:"letter"};
+    return null;
+  }
+
+  function transposeSingleNote(token, semis, preferFlat){
+    const parsed = parseNoteToken(token);
+    if(!parsed) return token;
+    const letter = parsed.type==="solfege" ? SOLFEGE_TO_LETTER[parsed.root] : parsed.root;
+    const name = letter + parsed.acc;
+    let idx = NOTES_SHARP.indexOf(name);
+    if(idx===-1) idx = NOTES_FLAT.indexOf(name);
+    if(idx===-1) return token;
+    const newIdx = ((idx + semis) % 12 + 12) % 12;
+    const table = preferFlat ? NOTES_FLAT : NOTES_SHARP;
+    const newLetterName = table[newIdx]; // e.g. "C#" or "Db"
+    const mm = newLetterName.match(/^([A-G])(#|b)?$/);
+    const newRoot = parsed.type==="solfege" ? LETTER_TO_SOLFEGE[mm[1]] : mm[1];
+    return newRoot + (mm[2]||"") + parsed.rest;
+  }
+
+  function transposeChordToken(chord, semis, preferFlat){
+    if(semis === 0) return chord;
+    // handle slash/bass chords like G/B, D/F#, Do/Mi
+    return chord.split("/").map(part => transposeSingleNote(part, semis, preferFlat)).join("/");
+  }
+  function transposeChordProText(text, semis, preferFlat){
+    if(semis === 0) return text;
+    return text.replace(/\[([^\]]+)\]/g, (m, chord)=> "[" + transposeChordToken(chord, semis, preferFlat) + "]");
+  }
+
+  const MODEL_TEXT = "gpt-4.1";
+  const MODEL_SEARCH = "gpt-4.1";
+
+  function extractResponsesText(data){
+    if(typeof data.output_text === "string" && data.output_text) return data.output_text;
+    let text = "";
+    (data.output||[]).forEach(item=>{
+      if(item.type === "message" && Array.isArray(item.content)){
+        item.content.forEach(c=>{ if(c.type === "output_text" && c.text) text += c.text; });
+      }
+    });
+    return text.trim();
+  }
+
+  async function callOpenAI({system, userText, useSearch}){
+    const key = getApiKey();
+    const workerUrl = getWorkerUrl();
+    if(!key) throw new Error("Falta tu API key de OpenAI — configúrala con ⚙");
+    if(!workerUrl) throw new Error("Falta la URL de tu proxy (Cloudflare Worker) — configúrala con ⚙");
+    const body = { model: useSearch ? MODEL_SEARCH : MODEL_TEXT, instructions: system, input: userText };
+    if(useSearch) body.tools = [{type:"web_search"}];
+    const response = await fetch(workerUrl, {
+      method:"POST",
+      headers: {"Content-Type":"application/json", "x-openai-key": key},
+      body: JSON.stringify(body)
+    });
+    if(!response.ok){
+      const errBody = await response.text().catch(()=> "");
+      throw new Error("API " + response.status + (errBody ? (" — " + errBody.slice(0,150)) : ""));
+    }
+    const data = await response.json();
+    return extractResponsesText(data);
+  }
+
+  async function aiFindSources(userQuery){
+    const system = "El usuario quiere tocar una canción y busca dónde ver su letra y acordes. " +
+      "IMPORTANTE: nunca reproduzcas letra, acordes completos ni fragmentos extensos de la canción en tu respuesta — solo metadatos. " +
+      "Identifica el título y artista más probable a partir del pedido del usuario, y busca en la web páginas confiables donde pueda verla " +
+      "(ej. cifraclub.com.br, lacuerda.net, ultimate-guitar.com, chordie, letras.com). " +
+      "Responde ÚNICAMENTE con JSON válido, sin texto extra ni bloques de código, con esta forma exacta: " +
+      '{"title":"...", "artist":"...", "sources":[{"label":"...", "domain":"...", "url":"..."}]}. ' +
+      "Máximo 4 fuentes reales encontradas en la búsqueda (no inventes URLs). Si no encuentras nada, usa sources: [].";
+    const raw = await callOpenAI({system, userText: userQuery, useSearch: true});
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const jsonStart = clean.indexOf("{");
+    const jsonStr = jsonStart >= 0 ? clean.slice(jsonStart) : clean;
+    return JSON.parse(jsonStr);
+  }
+
+  async function aiFormatToChordPro(rawText){
+    const system = "Recibirás un texto que el propio usuario pegó: letra y acordes de una canción que ya tiene. " +
+      "Reformatea al formato ChordPro colocando cada acorde entre corchetes [Así] justo antes de la sílaba donde corresponde, " +
+      "según su posición en el texto original (estén en línea aparte o ya mezclados). No agregues, corrijas ni inventes letra ni acordes nuevos. " +
+      "MUY IMPORTANTE — estrofas y coros repetidos: en muchas hojas de acordes, cuando una estrofa o el coro se repite, la segunda vez solo escriben la letra " +
+      "(o ponen 'Coro', 'Estribillo (bis)', 'x2', '(repite)') SIN volver a poner los acordes, asumiendo que el lector recuerda cuáles eran. Tú NO debes dejar esos acordes implícitos: " +
+      "cuando detectes que una sección de letra es una repetición de una estrofa o coro anterior (misma letra, o una marca como 'Coro'/'Estribillo'/'bis'/'x2'), " +
+      "escribe esa repetición completa con los mismos acordes que tenía la primera vez que apareció esa letra en el texto, en vez de dejarla sin acordes o resumirla. " +
+      "Esto es solo reordenar y completar lo que el propio usuario ya escribió una vez en su texto — no estás agregando contenido nuevo. " +
+      "Conserva los saltos de línea entre estrofas. Devuelve ÚNICAMENTE el texto convertido, sin explicaciones ni comillas.";
+    return await callOpenAI({system, userText: rawText, useSearch: false});
+  }
+
+  function h(tag, attrs, children){
+    const el = document.createElement(tag);
+    if(attrs) Object.keys(attrs).forEach(k=>{
+      if(k==="class") el.className = attrs[k];
+      else if(k==="html") el.innerHTML = attrs[k];
+      else if(k.startsWith("on")) el.addEventListener(k.slice(2), attrs[k]);
+      else el.setAttribute(k, attrs[k]);
+    });
+    (children||[]).forEach(c=>{ if(c==null) return; el.appendChild(typeof c==="string"?document.createTextNode(c):c); });
+    return el;
+  }
+
+  function bunting(n){
+    const b = h("div",{class:"bunting no-print"},[]);
+    for(let i=0;i<n;i++) b.appendChild(h("span",{}));
+    return b;
+  }
+
+  function showConfirm(message, onYes){
+    const overlay = h("div",{class:"overlay no-print"},[]);
+    const modal = h("div",{class:"modal", style:"max-width:380px;"},[
+      h("p",{style:"margin:0 0 18px;font-size:14.5px;"},[message]),
+      h("div",{class:"modal-actions"},[
+        h("button",{class:"btn", onclick:()=>overlay.remove()},["Cancelar"]),
+        h("button",{class:"btn primary", onclick:()=>{ overlay.remove(); onYes(); }},["Confirmar"]),
+      ]),
+    ]);
+    overlay.appendChild(modal);
+    overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  }
+
+  function showPrompt(message, defaultValue, onSubmit){
+    const overlay = h("div",{class:"overlay no-print"},[]);
+    const input = h("input",{type:"text", value:defaultValue||"", style:"width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:6px;background:var(--board-deep);color:var(--chalk);font-family:'Work Sans',sans-serif;font-size:14px;margin-bottom:16px;"});
+    input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ const v=input.value.trim(); overlay.remove(); if(v) onSubmit(v); } });
+    const modal = h("div",{class:"modal", style:"max-width:380px;"},[
+      h("p",{style:"margin:0 0 10px;font-size:14.5px;"},[message]),
+      input,
+      h("div",{class:"modal-actions"},[
+        h("button",{class:"btn", onclick:()=>overlay.remove()},["Cancelar"]),
+        h("button",{class:"btn primary", onclick:()=>{ const v=input.value.trim(); overlay.remove(); if(v) onSubmit(v); }},["Crear"]),
+      ]),
+    ]);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    setTimeout(()=>input.focus(), 30);
+  }
+
+  function showAlert(message){
+    const overlay = h("div",{class:"overlay no-print"},[]);
+    const modal = h("div",{class:"modal", style:"max-width:380px;"},[
+      h("p",{style:"margin:0 0 18px;font-size:14.5px;"},[message]),
+      h("div",{class:"modal-actions"},[
+        h("button",{class:"btn primary", onclick:()=>overlay.remove()},["Entendido"]),
+      ]),
+    ]);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  function openSettingsModal(){
+    const overlay = h("div",{class:"overlay no-print"},[]);
+    const keyInput = h("input",{type:"password", value:getApiKey(), placeholder:"sk-…"});
+    const workerInput = h("input",{type:"text", value:getWorkerUrl(), placeholder:"https://tu-worker.tu-usuario.workers.dev"});
+    const status = h("div",{class:"status-line"},[]);
+    const modal = h("div",{class:"modal"},[
+      h("h2",{},["Configuración"]),
+      h("div",{class:"field"},[
+        h("label",{},["API key de OpenAI"]),
+        keyInput,
+        h("p",{style:"font-size:12px;color:var(--chalk-dim);margin-top:6px;line-height:1.5;"},[
+          "Se guarda solo en este navegador. Consíguela en platform.openai.com."
+        ]),
+      ]),
+      h("div",{class:"field"},[
+        h("label",{},["URL de tu proxy (Cloudflare Worker)"]),
+        workerInput,
+        h("p",{style:"font-size:12px;color:var(--chalk-dim);margin-top:6px;line-height:1.5;"},[
+          "OpenAI no permite llamadas directas desde el navegador, por eso las peticiones pasan por un pequeño proxy que tú despliegas gratis en Cloudflare Workers. Instrucciones en el README."
+        ]),
+      ]),
+      status,
+      h("div",{class:"modal-actions"},[
+        h("button",{class:"btn", onclick:()=>overlay.remove()},["Cerrar"]),
+        h("button",{class:"btn primary", onclick:()=>{
+          setApiKey(keyInput.value.trim());
+          setWorkerUrl(workerInput.value.trim());
+          status.textContent="Guardado ✓"; status.classList.remove("error");
+        }},["Guardar"]),
+      ]),
+    ]);
+    overlay.appendChild(modal);
+    overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  }
+
+  function exportData(){
+    const data = {songs: state.songs, repertorios: state.repertorios, exportedAt: new Date().toISOString()};
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "cancionero-backup.json"; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }
+
+  function importData(file){
+    const reader = new FileReader();
+    reader.onload = async ()=>{
+      try{
+        const data = JSON.parse(reader.result);
+        if(!Array.isArray(data.songs) || !Array.isArray(data.repertorios)) throw new Error("formato inválido");
+        state.songs = data.songs;
+        state.repertorios = data.repertorios;
+        state.repertorios.forEach(r=>{ if(!Array.isArray(r.setlist)) r.setlist=[]; });
+        state.activeRepertorioId = state.repertorios[0] ? state.repertorios[0].id : null;
+        render();
+        await saveSongs(); await saveRepertorios();
+        showAlert("Cancionero importado ✓");
+      }catch(e){
+        showAlert("No se pudo leer ese archivo. ¿Es un backup exportado desde esta misma app?");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function render(){
+    root.innerHTML = "";
+    root.classList.toggle("stage-mode", state.stageMode && state.view==="detail");
+    if(!state.loaded){ root.appendChild(h("div",{},["Cargando cancionero…"])); return; }
+
+    root.appendChild(bunting(28));
+    root.appendChild(h("header",{class:"top"},[
+      h("h1",{},["Cancionero"]),
+      h("p",{},["Tus repertorios de letras y acordes"]),
+      h("nav",{class:"tabs no-print"},[
+        h("button",{class: state.view!=="list" && state.view!=="detail" ? "active":"", onclick:()=>{state.view="chat"; render();}},["💬 Agregar"]),
+        h("button",{class: (state.view==="list"||state.view==="detail") ? "active":"", onclick:()=>{state.view="list"; state.stageMode=false; render();}},["🎼 Repertorio (" + state.songs.length + ")"]),
+        h("button",{onclick: openSettingsModal},["⚙"]),
+      ]),
+    ]));
+
+    if(state.view === "chat") root.appendChild(renderChat());
+    else if(state.view === "detail") root.appendChild(renderDetail());
+    else root.appendChild(renderRepertorio());
+
+    root.appendChild(h("footer",{class:"foot no-print"},["Cancionero compartido — visible para todos los que abran este mismo cancionero."]));
+  }
+
+  function renderChat(){
+    const wrap = h("div",{class:"chat-wrap"},[]);
+    const log = h("div",{class:"chat-log"},[]);
+    state.messages.forEach(m=> log.appendChild(renderBubble(m)));
+    if(state.busy){ log.appendChild(h("div",{class:"bubble assistant"},["Buscando fuentes…"])); }
+    wrap.appendChild(log);
+
+    const inputRow = h("div",{class:"chat-input no-print"},[]);
+    const input = h("input",{type:"text", placeholder:"Ej: quiero tocar Vamos los dos de Chinoy"});
+    input.addEventListener("keydown",(e)=>{ if(e.key==="Enter") submitQuery(); });
+    const sendBtn = h("button",{class:"btn primary", onclick:submitQuery},["➤"]);
+    inputRow.appendChild(input); inputRow.appendChild(sendBtn);
+    wrap.appendChild(inputRow);
+
+    async function submitQuery(){
+      const val = input.value.trim();
+      if(!val || state.busy) return;
+      input.value = "";
+      state.messages.push({role:"user", kind:"text", text: val});
+      state.busy = true;
+      render();
+      focusChatInput();
+      try{
+        const result = await aiFindSources(val);
+        if(!result.sources || result.sources.length===0){
+          state.messages.push({role:"assistant", kind:"text",
+            text:"No encontré fuentes automáticamente para “" + val + "”. Puedes buscarla tú mismo y pegar el texto — la agrego igual."});
+        } else {
+          state.messages.push({role:"assistant", kind:"sources", title: result.title, artist: result.artist, sources: result.sources});
+        }
+        state.pending = {title: result.title || val, artist: result.artist || ""};
+        state.messages.push({role:"assistant", kind:"paste", pending: state.pending});
+      }catch(err){
+        state.messages.push({role:"assistant", kind:"text", text:"No pude buscar en este momento (" + err.message + "). Puedes pegar el texto de la canción directamente y la agrego."});
+        state.pending = {title: val, artist:""};
+        state.messages.push({role:"assistant", kind:"paste", pending: state.pending});
+      }
+      state.busy = false;
+      render();
+      focusChatInput();
+    }
+    function focusChatInput(){
+      const i = root.querySelector(".chat-input input");
+      if(i) i.focus();
+    }
+    return wrap;
+  }
+
+  function renderBubble(m){
+    if(m.kind === "text"){
+      return h("div",{class:"bubble " + m.role},[m.text]);
+    }
+    if(m.kind === "sources"){
+      const b = h("div",{class:"bubble assistant"},[
+        "Encontré esto para “" + (m.title||"") + (m.artist ? "” de " + m.artist : "”") + ". Ábrelas, copia el texto y pégalo abajo:",
+      ]);
+      m.sources.forEach(s=>{
+        b.appendChild(h("a",{class:"source-card", href:s.url, target:"_blank", rel:"noopener"},[
+          h("div",{class:"dom"},[s.domain||s.url]),
+          h("div",{class:"ttl"},[s.label||s.url]),
+        ]));
+      });
+      return b;
+    }
+    if(m.kind === "paste"){
+      return renderPasteBubble(m.pending);
+    }
+    return h("div",{});
+  }
+
+  function renderPasteBubble(pending){
+    const b = h("div",{class:"bubble assistant"},["Pega aquí lo que copiaste:"]);
+    const box = h("div",{class:"paste-box"},[]);
+    const ta = h("textarea",{placeholder:"Pega la letra y acordes tal como los copiaste. Puede tener los acordes en línea aparte arriba de la letra — yo la ordeno."},[]);
+    const status = h("div",{class:"status-line"},[]);
+    const titleIn = h("input",{type:"text", value: pending.title||"", placeholder:"Título", style:"margin-bottom:6px;width:100%;padding:8px 10px;border-radius:6px;border:1.5px solid var(--line);background:var(--board-deep);color:var(--chalk);font-family:'Work Sans',sans-serif;font-size:13.5px;"});
+    const authorIn = h("input",{type:"text", value: pending.artist||"", placeholder:"Autor/intérprete", style:"margin-bottom:6px;width:100%;padding:8px 10px;border-radius:6px;border:1.5px solid var(--line);background:var(--board-deep);color:var(--chalk);font-family:'Work Sans',sans-serif;font-size:13.5px;"});
+    const repSelect = h("select",{class:"chat-select"},[]);
+    state.repertorios.forEach(r=>{
+      const opt = h("option",{value:r.id},[r.name]);
+      if(state.activeRepertorioId === r.id) opt.setAttribute("selected","selected");
+      repSelect.appendChild(opt);
+    });
+    const ritmoSelect = h("select",{class:"chat-select"},[]);
+    ritmoSelect.appendChild(h("option",{value:""},["Ritmo (opcional)"]));
+    RITMOS.forEach(r=> ritmoSelect.appendChild(h("option",{value:r},[r])));
+    box.appendChild(titleIn); box.appendChild(authorIn); box.appendChild(repSelect); box.appendChild(ritmoSelect); box.appendChild(ta);
+    const actions = h("div",{class:"paste-actions"},[]);
+    const saveBtn = h("button",{class:"btn primary small", onclick: async ()=>{
+      const raw = ta.value.trim();
+      if(!raw){ status.textContent="Pega el texto primero."; status.classList.add("error"); return; }
+      saveBtn.disabled = true;
+      status.classList.remove("error");
+      status.textContent = "Formateando y guardando…";
+      try{
+        const formatted = await aiFormatToChordPro(raw);
+        const song = {
+          id: "s"+Date.now()+Math.random().toString(36).slice(2,7),
+          title: titleIn.value.trim() || pending.title || "Sin título",
+          author: authorIn.value.trim() || pending.artist || "",
+          repertorioId: repSelect.value || state.activeRepertorioId,
+          ritmo: ritmoSelect.value || "",
+          key:"", capo:"", notes:"",
+          chordproText: formatted, updatedAt: Date.now(),
+        };
+        state.songs.push(song);
+        await saveSongs();
+        state.messages.push({role:"assistant", kind:"text", text:"✅ Agregada “" + song.title + "” a tu repertorio. La puedes ver en la pestaña Repertorio."});
+        render();
+      }catch(err){
+        status.classList.add("error");
+        status.textContent = "No se pudo formatear (" + err.message + "). Intenta de nuevo.";
+        saveBtn.disabled = false;
+      }
+    }},["Formatear y agregar"]);
+    actions.appendChild(saveBtn); actions.appendChild(status);
+    box.appendChild(actions);
+    b.appendChild(box);
+    return b;
+  }
+
+  function filteredSongs(){
+    const q = state.search.trim().toLowerCase();
+    let list = state.songs.filter(s=>s.repertorioId === state.activeRepertorioId);
+    if(state.ritmoFilter) list = list.filter(s=>s.ritmo === state.ritmoFilter);
+    if(q) list = list.filter(s=>(s.title||"").toLowerCase().includes(q) || (s.author||"").toLowerCase().includes(q));
+    return list.slice().sort((a,b)=>(a.title||"").localeCompare(b.title||"","es"));
+  }
+
+  function activeRepertorio(){
+    return state.repertorios.find(r=>r.id===state.activeRepertorioId);
+  }
+
+  function toggleInSetlist(songId){
+    const rep = activeRepertorio();
+    if(!rep) return;
+    const idx = rep.setlist.indexOf(songId);
+    if(idx>=0) rep.setlist.splice(idx,1); else rep.setlist.push(songId);
+    saveRepertorios();
+  }
+
+  function moveInSetlist(songId, dir){
+    const rep = activeRepertorio();
+    if(!rep) return;
+    const idx = rep.setlist.indexOf(songId);
+    const swapWith = idx + dir;
+    if(idx<0 || swapWith<0 || swapWith>=rep.setlist.length) return;
+    [rep.setlist[idx], rep.setlist[swapWith]] = [rep.setlist[swapWith], rep.setlist[idx]];
+    saveRepertorios();
+  }
+
+  function renderRepertorioSelector(){
+    const bar = h("div",{class:"repertorio-bar no-print"},[]);
+    state.repertorios.forEach(r=>{
+      const isActive = r.id === state.activeRepertorioId;
+      const pill = h("div",{class:"rep-pill" + (isActive?" active":"")},[
+        h("span",{class:"name"},[r.name]),
+      ]);
+      pill.addEventListener("click",(e)=>{
+        if(e.target.classList.contains("rep-x")) return;
+        state.activeRepertorioId = r.id; state.search=""; render();
+      });
+      if(state.repertorios.length > 1){
+        const x = h("span",{class:"rep-x"},["✕"]);
+        x.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          showConfirm('¿Eliminar el repertorio "' + r.name + '" y sus canciones?', async ()=>{
+            state.songs = state.songs.filter(s=>s.repertorioId !== r.id);
+            state.repertorios = state.repertorios.filter(rp=>rp.id !== r.id);
+            if(state.activeRepertorioId === r.id) state.activeRepertorioId = state.repertorios[0].id;
+            render();
+            await saveRepertorios(); await saveSongs();
+          });
+        });
+        pill.appendChild(x);
+      }
+      bar.appendChild(pill);
+    });
+    const addBtn = h("button",{class:"rep-add", onclick:()=>{
+      showPrompt("Nombre del nuevo repertorio (ej: Bodas, Peña de amigos):", "", async (name)=>{
+        const rep = {id:"r"+Date.now()+Math.random().toString(36).slice(2,6), name:name, setlist:[]};
+        state.repertorios.push(rep);
+        state.activeRepertorioId = rep.id;
+        render();
+        await saveRepertorios();
+      });
+    }},["+ Repertorio"]);
+    bar.appendChild(addBtn);
+    return bar;
+  }
+
+  function renderRepertorio(){
+    const wrap = h("div",{},[]);
+    wrap.appendChild(renderRepertorioSelector());
+
+    const subtabs = h("div",{class:"rep-subtabs no-print"},[
+      h("button",{class: state.repSubview==="todas"?"active":"", onclick:()=>{state.repSubview="todas"; render();}},["Todas"]),
+      h("button",{class: state.repSubview==="setlist"?"active":"", onclick:()=>{state.repSubview="setlist"; render();}},["⭐ Set list ("+((activeRepertorio()||{}).setlist||[]).length+")"]),
+    ]);
+    wrap.appendChild(subtabs);
+
+    if(state.repSubview === "setlist"){
+      wrap.appendChild(renderSetlist());
+      return wrap;
+    }
+
+    const ritmosPresent = Array.from(new Set(state.songs.filter(s=>s.repertorioId===state.activeRepertorioId && s.ritmo).map(s=>s.ritmo)));
+    if(ritmosPresent.length){
+      const chips = h("div",{class:"ritmo-chips no-print"},[]);
+      chips.appendChild(h("button",{class:"ritmo-chip"+(!state.ritmoFilter?" active":""), onclick:()=>{state.ritmoFilter=null; render();}},["Todos"]));
+      ritmosPresent.forEach(r=>{
+        chips.appendChild(h("button",{class:"ritmo-chip"+(state.ritmoFilter===r?" active":""), onclick:()=>{state.ritmoFilter = state.ritmoFilter===r ? null : r; render();}},[r]));
+      });
+      wrap.appendChild(chips);
+    }
+
+    const bar = h("div",{class:"toolbar no-print"},[]);
+    const input = h("input",{type:"text", placeholder:"Buscar por título o autor…", value: state.search});
+    input.addEventListener("input",(e)=>{ state.search=e.target.value; const old=root.querySelector(".song-list, .empty"); const fresh=renderList(); if(old) old.replaceWith(fresh); });
+    bar.appendChild(input);
+    bar.appendChild(h("button",{class:"btn", onclick:()=>openManualForm()},["+ Manual"]));
+    bar.appendChild(h("button",{class:"btn", onclick: printRepertorio},["Imprimir"]));
+    if(!hasClaudeStorage){
+      bar.appendChild(h("button",{class:"btn", onclick: exportData},["Exportar"]));
+      const fileInput = h("input",{type:"file", accept:"application/json", style:"display:none;"});
+      fileInput.addEventListener("change",(e)=>{ if(e.target.files[0]) importData(e.target.files[0]); e.target.value=""; });
+      const importBtn = h("button",{class:"btn", onclick:()=>fileInput.click()},["Importar"]);
+      bar.appendChild(importBtn); bar.appendChild(fileInput);
+    }
+    wrap.appendChild(bar);
+    wrap.appendChild(renderList());
+    return wrap;
+  }
+
+  function renderSetlist(){
+    const rep = activeRepertorio();
+    const ids = rep ? rep.setlist : [];
+    if(!ids.length){
+      return h("div",{class:"empty"},["Aún no hay canciones en el set list. Ve a “Todas” y toca la ⭐ en cada canción que quieras tocar esa noche."]);
+    }
+    const wrap = h("div",{},[]);
+    const actionsTop = h("div",{style:"display:flex;gap:8px;margin-bottom:12px;", class:"no-print"},[
+      h("button",{class:"btn primary small", onclick:()=>{
+        const first = ids[0];
+        if(!first) return;
+        state.perf = {ids: ids.slice(), index:0};
+        state.activeId = first; state.transpose=0; state.stageMode=true; state.view="detail"; render();
+      }},["🎸 Iniciar show"]),
+      h("button",{class:"btn small", onclick: printRepertorio},["Imprimir set list"]),
+    ]);
+    wrap.appendChild(actionsTop);
+    const list = h("div",{class:"song-list"},[]);
+    ids.forEach((id,i)=>{
+      const s = state.songs.find(x=>x.id===id);
+      if(!s) return;
+      const row = h("div",{class:"setlist-row"},[
+        h("span",{class:"num"},[String(i+1)]),
+        (()=>{
+          const info = h("div",{class:"info"},[
+            h("h4",{},[s.title||"(sin título)"]),
+            h("span",{},[[s.author, s.ritmo].filter(Boolean).join(" · ")]),
+          ]);
+          info.addEventListener("click",()=>{ state.perf={ids:ids.slice(), index:i}; state.activeId=s.id; state.transpose=0; state.view="detail"; render(); });
+          return info;
+        })(),
+        h("div",{class:"ctrls no-print"},[
+          h("button",{class:"btn small", onclick:()=>moveInSetlist(id,-1)},["↑"]),
+          h("button",{class:"btn small", onclick:()=>moveInSetlist(id,1)},["↓"]),
+          h("button",{class:"btn small", onclick:()=>{toggleInSetlist(id); render();}},["✕"]),
+        ]),
+      ]);
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function renderList(){
+    const list = filteredSongs();
+    if(list.length===0){
+      return h("div",{class:"empty"},[state.songs.length===0 ? "Aún no hay canciones. Ve a la pestaña Agregar y cuéntame qué quieres tocar." : "Sin resultados."]);
+    }
+    const container = h("div",{class:"song-list"},[]);
+    list.forEach(s=>{
+      const rep = activeRepertorio();
+      const inSetlist = rep && rep.setlist.includes(s.id);
+      const star = h("button",{class:"star-btn"+(inSetlist?" on":""), title:"Agregar/quitar del set list", onclick:(e)=>{e.stopPropagation(); toggleInSetlist(s.id); render();}},[inSetlist?"★":"☆"]);
+      const card = h("div",{class:"placard"},[
+        h("div",{class:"row-actions no-print"},[
+          star,
+          h("button",{class:"btn small", onclick:(e)=>{e.stopPropagation(); openManualForm(s);}},["Editar"]),
+          h("button",{class:"btn small", onclick:(e)=>{e.stopPropagation(); deleteSong(s.id);}},["✕"]),
+        ]),
+        h("h3",{},[s.title||"(sin título)"]),
+        h("div",{class:"sub"},[
+          s.author||"",
+          s.ritmo ? h("span",{class:"tag"},[s.ritmo]) : null,
+          s.key ? h("span",{class:"tag"},["Tono "+s.key]) : null,
+          s.capo ? h("span",{class:"tag"},["Capo "+s.capo]) : null,
+        ]),
+      ]);
+      card.addEventListener("click",()=>{ state.perf=null; state.activeId=s.id; state.transpose=0; state.view="detail"; render(); });
+      container.appendChild(card);
+    });
+    return container;
+  }
+
+  function printRepertorio(){
+    const rep = activeRepertorio();
+    if(!rep) return;
+    const sheet = document.getElementById("printSheet");
+    sheet.innerHTML = "";
+
+    const songsInOrder = rep.setlist.length
+      ? rep.setlist.map(id=>state.songs.find(s=>s.id===id)).filter(Boolean)
+      : state.songs.filter(s=>s.repertorioId===rep.id).sort((a,b)=>(a.title||"").localeCompare(b.title||"","es"));
+
+    if(songsInOrder.length===0){ showAlert("Este repertorio no tiene canciones para imprimir."); return; }
+
+    const cover = h("div",{class:"print-cover"},[
+      h("h1",{},[rep.name]),
+      h("p",{},["Cancionero · " + songsInOrder.length + (songsInOrder.length===1?" canción":" canciones")]),
+    ]);
+    sheet.appendChild(cover);
+
+    const toc = h("div",{class:"print-toc"},[h("h2",{},["Índice"])]);
+    const ol = h("ol",{},[]);
+    songsInOrder.forEach(s=> ol.appendChild(h("li",{},[(s.title||"(sin título)") + (s.author?(" — "+s.author):"")])));
+    toc.appendChild(ol);
+    sheet.appendChild(toc);
+
+    songsInOrder.forEach(s=>{
+      const pc = h("div",{class:"print-chart"},[]);
+      pc.appendChild(h("h2",{},[s.title||"(sin título)"]));
+      const bylineParts=[]; if(s.author) bylineParts.push(s.author); if(s.ritmo) bylineParts.push(s.ritmo);
+      if(s.key) bylineParts.push("Tono "+s.key); if(s.capo) bylineParts.push("Capo "+s.capo);
+      pc.appendChild(h("div",{class:"byline"},[bylineParts.join(" · ")||"\u00A0"]));
+      (s.chordproText||"").split("\n").forEach(line=>{
+        if(line.trim()===""){ pc.appendChild(h("div",{class:"print-lyricline blank"},[])); return; }
+        const {chordStr, lyricStr} = parseChordProLine(line);
+        if(chordStr.trim()!=="") pc.appendChild(h("div",{class:"print-chordline"},[chordStr]));
+        pc.appendChild(h("div",{class:"print-lyricline"},[lyricStr]));
+      });
+      sheet.appendChild(pc);
+    });
+
+    window.print();
+  }
+
+  function openManualForm(song){
+    song = song || {};
+    const overlay = h("div",{class:"overlay no-print", id:"modalOverlay"},[]);
+    const titleInput = h("input",{type:"text", value:song.title||""});
+    const authorInput = h("input",{type:"text", value:song.author||""});
+    const keyInput = h("input",{type:"text", value:song.key||""});
+    const capoInput = h("input",{type:"text", value:song.capo||""});
+    const notesInput = h("input",{type:"text", value:song.notes||""});
+    const bodyInput = h("textarea",{rows:9, placeholder:"[Am]así queda una línea con acordes"});
+    bodyInput.value = song.chordproText||"";
+    const repSelect = h("select",{},[]);
+    state.repertorios.forEach(r=>{
+      const opt = h("option",{value:r.id},[r.name]);
+      if((song.repertorioId||state.activeRepertorioId) === r.id) opt.setAttribute("selected","selected");
+      repSelect.appendChild(opt);
+    });
+    const ritmoSelect = h("select",{},[]);
+    ritmoSelect.appendChild(h("option",{value:""},["—"]));
+    RITMOS.forEach(r=>{
+      const opt = h("option",{value:r},[r]);
+      if(song.ritmo === r) opt.setAttribute("selected","selected");
+      ritmoSelect.appendChild(opt);
+    });
+    const modal = h("div",{class:"modal"},[
+      h("h2",{},[song.id ? "Editar canción" : "Agregar manualmente"]),
+      h("div",{class:"field"},[h("label",{},["Título"]), titleInput]),
+      h("div",{class:"row3"},[
+        h("div",{class:"field"},[h("label",{},["Repertorio"]), repSelect]),
+        h("div",{class:"field"},[h("label",{},["Ritmo"]), ritmoSelect]),
+        h("div",{class:"field"},[h("label",{},["Tono"]), keyInput]),
+      ]),
+      h("div",{class:"row3"},[
+        h("div",{class:"field"},[h("label",{},["Autor"]), authorInput]),
+        h("div",{class:"field"},[h("label",{},["Capo"]), capoInput]),
+        h("div",{class:"field"},[]),
+      ]),
+      h("div",{class:"field"},[h("label",{},["Notas"]), notesInput]),
+      h("div",{class:"field"},[h("label",{},["Letra y acordes"]), bodyInput]),
+      h("div",{class:"modal-actions"},[
+        h("button",{class:"btn", onclick:()=>{overlay.remove();}},["Cancelar"]),
+        h("button",{class:"btn primary", onclick: async ()=>{
+          if(!titleInput.value.trim()){ titleInput.style.borderColor="var(--clay)"; return; }
+          const data = {
+            id: song.id || ("s"+Date.now()+Math.random().toString(36).slice(2,7)),
+            title: titleInput.value.trim(), author: authorInput.value.trim(),
+            repertorioId: repSelect.value || state.activeRepertorioId,
+            ritmo: ritmoSelect.value || "",
+            key: keyInput.value.trim(), capo: capoInput.value.trim(), notes: notesInput.value.trim(),
+            chordproText: bodyInput.value, updatedAt: Date.now(),
+          };
+          const idx = state.songs.findIndex(s=>s.id===data.id);
+          if(idx>=0) state.songs[idx]=data; else state.songs.push(data);
+          overlay.remove();
+          state.view="list"; render();
+          await saveSongs();
+        }},["Guardar"]),
+      ]),
+    ]);
+    overlay.appendChild(modal);
+    overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  }
+
+  async function deleteSong(id){
+    showConfirm("¿Eliminar esta canción?", async ()=>{
+      state.songs = state.songs.filter(s=>s.id!==id);
+      let repChanged = false;
+      state.repertorios.forEach(r=>{
+        const idx = r.setlist.indexOf(id);
+        if(idx>=0){ r.setlist.splice(idx,1); repChanged = true; }
+      });
+      render();
+      await saveSongs();
+      if(repChanged) await saveRepertorios();
+    });
+  }
+
+  let autoScrollTimer = null;
+  function stopAutoScroll(){
+    if(autoScrollTimer){ clearInterval(autoScrollTimer); autoScrollTimer = null; }
+  }
+  function startAutoScroll(){
+    stopAutoScroll();
+    autoScrollTimer = setInterval(()=>{
+      window.scrollBy(0, state.scrollSpeed/10);
+      if((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 4){ stopAutoScroll(); state.autoScroll=false; render(); }
+    }, 100);
+  }
+
+  function goToPerfIndex(newIndex){
+    if(!state.perf) return;
+    if(newIndex < 0 || newIndex >= state.perf.ids.length) return;
+    state.perf.index = newIndex;
+    state.activeId = state.perf.ids[newIndex];
+    state.transpose = 0;
+    render();
+  }
+
+  function renderDetail(){
+    const song = state.songs.find(s=>s.id===state.activeId);
+    if(!song){ state.view="list"; return renderRepertorio(); }
+
+    const wrap = h("div",{},[]);
+    const barTop = h("div",{class:"detail-bar no-print"},[
+      h("button",{class:"btn small", onclick:()=>{stopAutoScroll(); state.autoScroll=false; state.view="list"; state.stageMode=false; state.perf=null; render();}},["← Volver"]),
+      h("div",{class:"transpose"},[
+        h("button",{onclick:()=>{state.transpose--; render();}},["–"]),
+        h("span",{class:"val"},[(state.transpose>0?"+":"")+state.transpose]),
+        h("button",{onclick:()=>{state.transpose++; render();}},["+"]),
+        h("button",{class:"btn small", style:"border-radius:14px;margin-left:4px;", onclick:()=>{state.preferFlat=!state.preferFlat; render();}},[state.preferFlat?"♭":"♯"]),
+      ]),
+      h("button",{class:"btn small", onclick:()=>{stopAutoScroll(); state.autoScroll=false; state.stageMode=!state.stageMode; render();}},[state.stageMode?"Salir de escenario":"🎸 Escenario"]),
+    ]);
+    wrap.appendChild(barTop);
+
+    // key jump + save
+    if(state.transpose !== 0){
+      const currentKey = song.key ? transposeChordToken(song.key, state.transpose, state.preferFlat) : null;
+      const saveRow = h("div",{class:"key-jump no-print", style:"margin:-8px 0 14px;"},[
+        h("span",{class:"lbl"},[currentKey ? ("Sonando en " + currentKey + " ahora — ") : "Transposición activa — "]),
+        h("button",{class:"btn small", onclick: async ()=>{
+          song.chordproText = transposeChordProText(song.chordproText||"", state.transpose, state.preferFlat);
+          if(song.key) song.key = transposeChordToken(song.key, state.transpose, state.preferFlat);
+          state.transpose = 0;
+          render();
+          await saveSongs();
+        }},["Guardar este tono"]),
+      ]);
+      wrap.appendChild(saveRow);
+    }
+
+    if(state.perf){
+      const nav = h("div",{class:"perf-nav no-print", style:"margin-bottom:14px;"},[
+        h("button",{class:"btn small", disabled: state.perf.index<=0, onclick:()=>goToPerfIndex(state.perf.index-1)},["⬅ Anterior"]),
+        h("span",{class:"lbl", style:"align-self:center;color:var(--chalk-dim);font-size:12.5px;"},[(state.perf.index+1)+" / "+state.perf.ids.length+" del set list"]),
+        h("button",{class:"btn small", disabled: state.perf.index>=state.perf.ids.length-1, onclick:()=>goToPerfIndex(state.perf.index+1)},["Siguiente ➡"]),
+      ]);
+      wrap.appendChild(nav);
+    }
+
+    if(state.stageMode){
+      const asBar = h("div",{class:"autoscroll-bar no-print"},[
+        h("button",{class:"btn small", onclick:()=>{
+          state.autoScroll = !state.autoScroll;
+          if(state.autoScroll) startAutoScroll(); else stopAutoScroll();
+          render();
+        }},[state.autoScroll ? "⏸ Pausar scroll" : "▶ Auto-scroll"]),
+        h("span",{class:"lbl"},["Velocidad"]),
+        h("input",{type:"range", min:"5", max:"100", value:String(state.scrollSpeed), oninput:(e)=>{ state.scrollSpeed = Number(e.target.value); if(state.autoScroll) startAutoScroll(); }}),
+      ]);
+      wrap.appendChild(asBar);
+    }
+
+    const chart = h("div",{class:"chart"},[]);
+    chart.appendChild(h("h2",{},[song.title||"(sin título)"]));
+    const bylineParts=[]; if(song.author) bylineParts.push(song.author); if(song.ritmo) bylineParts.push(song.ritmo); if(song.notes) bylineParts.push(song.notes);
+    chart.appendChild(h("div",{class:"byline"},[bylineParts.join(" · ")||"\u00A0"]));
+
+    const tagRow = h("div",{style:"margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"},[]);
+    if(song.key) tagRow.appendChild(h("span",{class:"tag"},["Tono "+transposeChordToken(song.key,state.transpose,state.preferFlat)]));
+    if(song.capo) tagRow.appendChild(h("span",{class:"tag"},["Capo "+song.capo]));
+    if(song.key){
+      const jump = h("select",{class:"no-print"},[]);
+      jump.appendChild(h("option",{value:""},["Saltar a tono…"]));
+      NOTES_SHARP.forEach(n=>jump.appendChild(h("option",{value:n},[n])));
+      jump.addEventListener("change",(e)=>{
+        if(!e.target.value) return;
+        const fromIdx = NOTES_SHARP.indexOf(transposeChordToken(song.key,0,false));
+        const toIdx = NOTES_SHARP.indexOf(e.target.value);
+        if(fromIdx>=0 && toIdx>=0){ state.transpose = ((toIdx-fromIdx)%12+12)%12; render(); }
+      });
+      tagRow.appendChild(jump);
+    }
+    chart.appendChild(tagRow);
+
+    const text = transposeChordProText(song.chordproText||"", state.transpose, state.preferFlat);
+    text.split("\n").forEach(line=>{
+      if(line.trim()===""){ chart.appendChild(h("div",{class:"lyricline blank"},[])); return; }
+      const {chordStr, lyricStr} = parseChordProLine(line);
+      if(chordStr.trim()!=="") chart.appendChild(h("div",{class:"chordline"},[chordStr]));
+      chart.appendChild(h("div",{class:"lyricline"},[lyricStr]));
+    });
+    wrap.appendChild(chart);
+    return wrap;
+  }
+
+  loadSongs();
+})();
+</script>
+</body>
+</html>
