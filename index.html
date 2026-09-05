@@ -3,1095 +3,672 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cancionero</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Mi Cancionero V8.1 Firebase Compartido</title>
 <style>
-  :root{
-    --board:#212b21;
-    --board-deep:#171f17;
-    --board-panel:#2a3529;
-    --chalk:#f3eee1;
-    --chalk-dim:#b9b6a6;
-    --gold:#e3ab3d;
-    --clay:#c1503c;
-    --sky:#7fa3c4;
-    --line: rgba(243,238,225,.14);
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:
-      radial-gradient(ellipse at 15% 0%, rgba(227,171,61,.06), transparent 45%),
-      radial-gradient(ellipse at 85% 100%, rgba(127,163,196,.06), transparent 50%),
-      var(--board);
-    color:var(--chalk);
-    font-family:'Work Sans', sans-serif;
-    min-height:100vh;
-  }
-  body::before{
-    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
-    opacity:.05; mix-blend-mode:screen;
-    background-image:
-      radial-gradient(circle at 20% 30%, #fff 0.5px, transparent 0.6px),
-      radial-gradient(circle at 60% 70%, #fff 0.5px, transparent 0.6px),
-      radial-gradient(circle at 80% 20%, #fff 0.5px, transparent 0.6px),
-      radial-gradient(circle at 40% 85%, #fff 0.5px, transparent 0.6px);
-    background-size: 140px 140px;
-  }
-  .app{max-width:760px; margin:0 auto; padding:22px 18px 60px; position:relative; z-index:1;}
+:root{
+  --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
+  --petrol:#15636b;--petrol-dark:#0e4d54;--terra:#c9674a;--mustard:#d8a62e;--olive:#718455;
+  --soft-blue:#e3eff1;--soft-terra:#f8e7df;--soft-yellow:#faf0cf;--soft-green:#e9efe2;
+  --shadow:0 12px 32px rgba(45,52,54,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:245px 1fr}
+aside{position:sticky;top:0;height:100vh;padding:28px 20px;background:#f1eee6;border-right:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:34px}
+.logo{width:42px;height:42px;border-radius:14px;background:var(--petrol);color:white;display:grid;place-items:center;font-size:22px;font-weight:900}
+.brand h1{font-size:18px;margin:0}.brand span{font-size:12px;color:var(--muted)}
+nav{display:flex;flex-direction:column;gap:8px}
+.nav-btn{border:0;background:transparent;padding:13px 14px;border-radius:14px;text-align:left;font-weight:750;color:var(--ink)}
+.nav-btn:hover,.nav-btn.active{background:var(--paper)}.nav-btn.active{color:var(--petrol)}
+.aside-foot{position:absolute;bottom:24px;left:20px;right:20px;color:var(--muted);font-size:12px;line-height:1.45}
+main{padding:34px;max-width:1420px;width:100%;margin:auto}
+.view{display:none}.view.active{display:block}
+.topbar{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:28px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.13em;font-weight:900;color:var(--terra)}
+h2{font-size:34px;line-height:1.05;margin:7px 0 8px}h3{margin:0}
+.subtitle{color:var(--muted);margin:0;line-height:1.5}
+.primary,.secondary,.ghost,.icon-btn{border:0;border-radius:14px;padding:12px 16px;font-weight:850}
+.primary{background:var(--petrol);color:white}.primary:hover{background:var(--petrol-dark)}
+.secondary{background:var(--soft-terra);color:#823f2d}.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+.icon-btn{background:var(--paper);border:1px solid var(--line);padding:10px 12px}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:24px;background:linear-gradient(135deg,#fffdf8,#f8f0df);border:1px solid var(--line);border-radius:30px;padding:30px;box-shadow:var(--shadow)}
+.hero h3{font-size:30px;margin-bottom:12px}.hero p{color:var(--muted);line-height:1.55;max-width:650px}
+.hero-art{min-height:190px;border-radius:24px;background:radial-gradient(circle at 20% 20%,rgba(201,103,74,.25),transparent 30%),radial-gradient(circle at 78% 20%,rgba(21,99,107,.22),transparent 34%),radial-gradient(circle at 66% 78%,rgba(216,166,46,.26),transparent 31%),#eee9df;display:grid;place-items:center;font-size:86px;color:var(--petrol)}
+.searchbox,.big-search{display:flex;gap:10px}.searchbox{margin-top:22px}.searchbox input,.big-search input{flex:1;border:1px solid var(--line);border-radius:14px;background:white;padding:15px 16px;outline:none}
+.searchbox input:focus,.big-search input:focus{border-color:var(--petrol)}
+.section-head{display:flex;justify-content:space-between;align-items:end;margin:28px 0 14px}
+.section-head h3{font-size:22px}.section-head p{margin:5px 0 0;color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 5px 20px rgba(44,52,54,.04)}
+.song-card{display:flex;gap:15px}.cover{width:88px;height:88px;object-fit:cover;border-radius:15px;background:#ebe6dc;border:1px solid var(--line);flex:none}
+.song-info{min-width:0;flex:1}.song-title{font-weight:900;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.song-artist{font-size:14px;color:var(--muted);margin-top:3px}.song-album{font-size:12px;color:var(--muted);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.badge{padding:6px 9px;border-radius:999px;font-size:11px;font-weight:850;display:inline-flex}.b-auto{background:var(--soft-blue);color:var(--petrol-dark)}.b-chords{background:var(--soft-green);color:#53643d}.b-lyrics{background:var(--soft-yellow);color:#705615}.b-tone{background:var(--soft-terra);color:#813e2c}
+.song-actions{display:flex;gap:8px;margin-top:13px}.song-actions button{flex:1;padding:10px 12px}
+.search-panel{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:var(--shadow)}
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.result{display:grid;grid-template-columns:82px 1fr auto;gap:13px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px}.result img{width:82px;height:82px;object-fit:cover;border-radius:13px}.result-title{font-weight:900}.result-meta{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.4}
+.library-toolbar{display:flex;gap:10px;margin-bottom:18px}.library-toolbar input{flex:1}.library-toolbar input,.library-toolbar select{border:1px solid var(--line);border-radius:12px;background:white;padding:11px 13px}
+.rep-list{display:grid;gap:12px}.rep{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:17px 18px;display:flex;justify-content:space-between;align-items:center}.rep small{color:var(--muted)}
+.player-shell{max-width:980px;margin:auto}.player-head{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:22px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;box-shadow:var(--shadow)}
+.player-meta{display:flex;gap:17px;align-items:flex-start}.player-cover{width:120px;height:120px;border-radius:18px;object-fit:cover;border:1px solid var(--line);background:#ebe6dc}
+.player-title h2{font-size:30px;margin:0}.player-title p{margin:5px 0 0;color:var(--muted)}
+.player-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.tab{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:9px 13px;border-radius:999px;font-weight:800}.tab.active{background:var(--petrol);color:white;border-color:var(--petrol)}
+.sheet{margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:34px 38px;white-space:pre-wrap}
+.lyrics{font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.75}
+.chords{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:17px;line-height:1.65}
+.chord-line{color:var(--terra);font-weight:900}.section-line{color:var(--petrol);font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-top:10px}
+.empty{margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:36px;text-align:center}.empty h3{font-size:22px;margin-bottom:8px}.empty p{color:var(--muted);max-width:650px;margin:0 auto 18px;line-height:1.55}
+.quick-paste{margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:18px}
+.quick-paste h3{margin-bottom:6px}.quick-paste p{color:var(--muted);margin:0;line-height:1.45}
+.quick-paste textarea{width:100%;min-height:220px;border:1px solid var(--line);border-radius:14px;background:white;padding:13px;margin-top:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}
+.paste-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.copyright{margin:18px 0 40px;padding:18px 20px;background:#f0ede5;border-radius:18px;color:var(--muted);font-size:12px;line-height:1.55}
+.toast{position:fixed;right:22px;bottom:22px;background:var(--ink);color:white;padding:12px 15px;border-radius:12px;opacity:0;pointer-events:none;transform:translateY(8px);transition:.2s;z-index:99}.toast.show{opacity:1;transform:none}
+body.stage-mode aside,body.stage-mode .back-btn,body.stage-mode .copyright,body.stage-mode .quick-paste,body.stage-mode .tabs{display:none!important}
+body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1100px}body.stage-mode .sheet{border:0;font-size:24px}
+@media(max-width:1050px){.results{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{position:fixed;z-index:20;left:12px;right:12px;bottom:12px;top:auto;height:auto;padding:8px;border:1px solid var(--line);border-radius:18px;background:rgba(241,238,230,.96);backdrop-filter:blur(15px)}.brand,.aside-foot{display:none}nav{flex-direction:row;overflow:auto}.nav-btn{min-width:max-content}main{padding:24px 18px 95px}.hero{grid-template-columns:1fr}.hero-art{min-height:130px}}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.result{grid-template-columns:68px 1fr}.result img{width:68px;height:68px}.result button{grid-column:1/-1}.player-head{display:block}.player-controls{justify-content:flex-start;margin-top:16px}.player-cover{width:82px;height:82px}.sheet{padding:24px 20px}.library-toolbar{flex-direction:column}}
 
-  .bunting{display:flex; justify-content:center; gap:3px; margin-bottom:2px; padding:0 4px;}
-  .bunting span{width:14px; height:16px; clip-path: polygon(0 0, 100% 0, 50% 100%);}
-  .bunting span:nth-child(4n+1){background:var(--gold);}
-  .bunting span:nth-child(4n+2){background:var(--clay);}
-  .bunting span:nth-child(4n+3){background:var(--sky);}
-  .bunting span:nth-child(4n){background:var(--chalk-dim);}
+.inline-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.editor-panel{margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:18px}
+.editor-panel textarea{width:100%;min-height:360px;border:1px solid var(--line);border-radius:14px;background:white;padding:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;line-height:1.55;resize:vertical}
+.rep-picker{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.rep-picker select{min-width:220px;border:1px solid var(--line);border-radius:12px;background:white;padding:10px 12px}
+.backup-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 
-  header.top{padding:6px 0 16px; text-align:center; border-bottom:1px solid var(--line); margin-bottom:18px;}
-  header.top h1{font-family:'Caveat', cursive; font-weight:700; font-size:clamp(34px,7vw,50px); margin:2px 0 0; color:var(--chalk); letter-spacing:.01em;}
-  header.top p{margin:2px 0 12px; color:var(--chalk-dim); font-size:14px;}
 
-  nav.tabs{display:flex; justify-content:center; gap:6px; margin-top:6px;}
-  nav.tabs button{background:transparent; border:1px solid var(--line); color:var(--chalk-dim); padding:7px 16px; border-radius:20px; font-family:'Work Sans',sans-serif; font-size:13.5px; cursor:pointer; transition:all .15s ease;}
-  nav.tabs button.active{background:var(--gold); color:var(--board-deep); border-color:var(--gold); font-weight:600;}
-  nav.tabs button:hover:not(.active){border-color:var(--chalk-dim); color:var(--chalk);}
+.cloud-btn{width:100%;margin-top:16px}
+.cloud-panel{position:fixed;inset:0;background:rgba(20,28,30,.38);display:none;align-items:center;justify-content:center;padding:20px;z-index:200}
+.cloud-panel.open{display:flex}
+.cloud-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow)}
+.cloud-card h3{font-size:23px;margin-bottom:6px}
+.cloud-card p{color:var(--muted);line-height:1.45}
+.cloud-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cloud-grid .full{grid-column:1/-1}
+.cloud-grid label{display:grid;gap:6px;font-size:13px;font-weight:800}
+.cloud-grid input{width:100%;border:1px solid var(--line);border-radius:12px;background:white;padding:11px 12px}
+.cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.cloud-status{margin-top:12px;padding:11px 12px;border-radius:12px;background:var(--soft-blue);color:#345b60;font-size:12px;line-height:1.45}
+.cloud-status.ok{background:var(--soft-green);color:#53643d}
+.cloud-status.bad{background:var(--soft-terra);color:#813e2c}
+.sync-pill{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;font-weight:850;color:var(--muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#aaa}.sync-dot.ok{background:var(--olive)}.sync-dot.busy{background:var(--mustard)}.sync-dot.bad{background:var(--terra)}
+@media(max-width:650px){.cloud-grid{grid-template-columns:1fr}.cloud-grid .full{grid-column:auto}}
 
-  button{font-family:'Work Sans',sans-serif; cursor:pointer;}
-  .btn{border:1.5px solid var(--chalk); background:transparent; color:var(--chalk); padding:9px 15px; border-radius:6px; font-size:14px; transition:all .15s ease;}
-  .btn:hover{background:rgba(243,238,225,.08);}
-  .btn.primary{background:var(--gold); border-color:var(--gold); color:var(--board-deep); font-weight:600;}
-  .btn.primary:hover{background:#f0ba52;}
-  .btn.small{padding:5px 11px; font-size:12.5px; border-radius:5px;}
-  .btn:disabled{opacity:.45; cursor:not-allowed;}
-
-  .chat-wrap{display:flex; flex-direction:column; min-height:50vh;}
-  .chat-log{flex:1; display:flex; flex-direction:column; gap:14px; margin-bottom:16px;}
-  .bubble{max-width:88%; padding:13px 16px; border-radius:12px; line-height:1.55; font-size:14.5px;}
-  .bubble.assistant{background:var(--board-panel); border:1px solid var(--line); align-self:flex-start; border-top-left-radius:3px;}
-  .bubble.user{background:rgba(227,171,61,.14); border:1px solid rgba(227,171,61,.4); color:var(--chalk); align-self:flex-end; border-top-right-radius:3px;}
-  .source-card{display:block; text-decoration:none; background:var(--board-deep); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:8px; color:var(--chalk);}
-  .source-card:hover{border-color:var(--gold);}
-  .source-card .dom{color:var(--sky); font-size:11.5px; font-family:'IBM Plex Mono',monospace;}
-  .source-card .ttl{font-size:14px; margin-top:2px;}
-  .paste-box{margin-top:12px;}
-  .paste-box textarea{width:100%; min-height:120px; background:var(--board-deep); border:1.5px solid var(--line); border-radius:8px; color:var(--chalk); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:11px; line-height:1.7; resize:vertical;}
-  .paste-actions{display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap;}
-  .status-line{font-size:12.5px; color:var(--sky); font-style:italic;}
-  .status-line.error{color:var(--clay);}
-
-  .chat-input{display:flex; gap:8px; position:sticky; bottom:0; padding-top:10px; background:linear-gradient(to top, var(--board) 60%, transparent);}
-  .chat-input input{flex:1; background:var(--board-panel); border:1.5px solid var(--line); border-radius:24px; padding:12px 18px; color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:14.5px;}
-  .chat-input input:focus{outline:none; border-color:var(--gold);}
-  .chat-input button{border-radius:50%; width:44px; height:44px; padding:0; flex:0 0 auto; font-size:18px;}
-
-  .repertorio-bar{display:flex; gap:7px; margin-bottom:16px; flex-wrap:wrap; align-items:center;}
-  .rep-pill{display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:18px; padding:6px 8px 6px 14px; background:var(--board-panel); cursor:pointer; transition:all .15s ease;}
-  .rep-pill.active{border-color:var(--gold); background:rgba(227,171,61,.12);}
-  .rep-pill span.name{font-size:13.5px; color:var(--chalk);}
-  .rep-pill.active span.name{color:var(--gold); font-weight:600;}
-  .rep-pill .rep-x{font-size:11px; color:var(--chalk-dim); border:1px solid var(--line); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center;}
-  .rep-pill .rep-x:hover{color:var(--clay); border-color:var(--clay);}
-  .rep-add{border:1px dashed var(--line); border-radius:18px; padding:6px 14px; background:transparent; color:var(--chalk-dim); font-size:13.5px; cursor:pointer;}
-  .rep-add:hover{border-color:var(--gold); color:var(--gold);}
-  select.chat-select{background:var(--board-deep); border:1.5px solid var(--line); border-radius:6px; color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:13px; padding:7px 9px; margin-bottom:6px; width:100%;}
-
-  .rep-subtabs{display:flex; gap:6px; margin-bottom:14px;}
-  .rep-subtabs button{background:transparent; border:1px solid var(--line); color:var(--chalk-dim); padding:6px 13px; border-radius:16px; font-size:13px;}
-  .rep-subtabs button.active{background:var(--sky); border-color:var(--sky); color:var(--board-deep); font-weight:600;}
-
-  .ritmo-chips{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
-  .ritmo-chip{border:1px solid var(--line); border-radius:14px; padding:4px 11px; font-size:12.5px; color:var(--chalk-dim); cursor:pointer; background:transparent;}
-  .ritmo-chip.active{border-color:var(--clay); color:var(--clay); background:rgba(193,80,60,.1);}
-
-  .star-btn{background:transparent; border:none; font-size:17px; cursor:pointer; color:var(--chalk-dim); line-height:1; padding:2px;}
-  .star-btn.on{color:var(--gold);}
-
-  .setlist-row{display:flex; align-items:center; gap:10px; background:var(--board-panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px;}
-  .setlist-row .num{font-family:'IBM Plex Mono',monospace; color:var(--sky); font-size:13px; width:20px;}
-  .setlist-row .info{flex:1; cursor:pointer;}
-  .setlist-row .info h4{margin:0; font-family:'Caveat',cursive; font-size:20px; color:var(--gold); font-weight:700;}
-  .setlist-row .info span{font-size:12px; color:var(--chalk-dim);}
-  .setlist-row .ctrls{display:flex; gap:4px;}
-  .setlist-row .ctrls button{width:26px; height:26px; padding:0; border-radius:5px; font-size:12px;}
-
-  .key-jump{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-  .key-jump select{background:var(--board-panel); border:1px solid var(--line); border-radius:6px; color:var(--chalk); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:5px 8px;}
-
-  .autoscroll-bar{display:flex; align-items:center; gap:10px; background:var(--board-panel); border:1px solid var(--line); border-radius:22px; padding:6px 14px; margin-bottom:14px; flex-wrap:wrap;}
-  .autoscroll-bar input[type="range"]{accent-color:var(--gold); width:110px;}
-  .autoscroll-bar .lbl{font-size:12px; color:var(--chalk-dim);}
-
-  .perf-nav{display:flex; gap:8px;}
-
-  #printSheet{display:none;}
-
-  .toolbar{display:flex; gap:10px; margin-bottom:16px;}
-  .toolbar input{flex:1; padding:10px 14px; border-radius:8px; border:1.5px solid var(--line); background:var(--board-panel); color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:14px;}
-  .song-list{display:flex; flex-direction:column; gap:10px;}
-  .placard{position:relative; background:var(--board-panel); border:1px solid var(--line); border-radius:8px; padding:16px 16px 14px; cursor:pointer; transition:border-color .15s ease;}
-  .placard:hover{border-color:var(--gold);}
-  .placard::before{content:""; position:absolute; top:-5px; left:50%; transform:translateX(-50%); width:10px; height:10px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 2px var(--board-deep);}
-  .placard h3{font-family:'Caveat', cursive; font-weight:700; font-size:24px; margin:0 0 4px; color:var(--gold);}
-  .placard .sub{font-size:13px; color:var(--chalk-dim); display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-  .placard .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:2px 7px; border:1px solid var(--line); border-radius:4px;}
-  .placard .row-actions{position:absolute; top:12px; right:12px; display:flex; gap:6px;}
-  .empty{text-align:center; padding:50px 20px; color:var(--chalk-dim); border:1px dashed var(--line); border-radius:10px;}
-
-  .detail-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap;}
-  .transpose{display:flex; align-items:center; gap:6px; background:var(--board-panel); border:1px solid var(--line); border-radius:22px; padding:4px 6px;}
-  .transpose button{border-radius:50%; width:28px; height:28px; padding:0; line-height:1; background:transparent; border:1px solid var(--line); color:var(--chalk);}
-  .transpose .val{font-family:'IBM Plex Mono',monospace; font-size:13px; min-width:34px; text-align:center;}
-
-  .chart{background:var(--board-deep); border:1px solid var(--line); border-radius:10px; padding:26px 28px;}
-  .chart h2{font-family:'Caveat',cursive; font-weight:700; margin:0 0 2px; font-size:34px; color:var(--gold);}
-  .chart .byline{color:var(--chalk-dim); font-size:14px; margin-bottom:16px;}
-  .chordline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:var(--sky); font-weight:600; font-size:14px; line-height:1; margin:0;}
-  .lyricline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:var(--chalk); font-size:14.5px; line-height:1.9; margin:0 0 2px;}
-  .lyricline.blank{height:14px;}
-  .stage-mode .chart{padding:40px;}
-  .stage-mode .chart h2{font-size:44px;}
-  .stage-mode .chordline{font-size:21px;}
-  .stage-mode .lyricline{font-size:21px; line-height:2.15;}
-
-  .overlay{position:fixed; inset:0; background:rgba(10,14,10,.65); display:flex; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto; z-index:50;}
-  .modal{background:var(--board-panel); border:1px solid var(--line); border-radius:12px; max-width:600px; width:100%; padding:24px; margin-bottom:40px;}
-  .modal h2{font-family:'Caveat',cursive; font-size:26px; color:var(--gold); margin:0 0 16px;}
-  .field{margin-bottom:13px;}
-  .field label{display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--chalk-dim); margin-bottom:5px;}
-  .field input, .field textarea{width:100%; padding:9px 11px; border:1.5px solid var(--line); border-radius:6px; background:var(--board-deep); color:var(--chalk); font-family:'Work Sans',sans-serif; font-size:14px;}
-  .field textarea{font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.7;}
-  .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
-  .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
-
-  footer.foot{text-align:center; margin-top:30px; font-size:12px; color:var(--chalk-dim);}
-
-  @media print{
-    body{background:#fff; color:#000;}
-    body::before{display:none;}
-    .no-print, #root{display:none !important;}
-    #printSheet{display:block !important;}
-    .print-cover{min-height:90vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; page-break-after:always;}
-    .print-cover h1{font-family:'Caveat',cursive; font-size:64px; color:#7a1f2b; margin:0;}
-    .print-cover p{color:#555; font-size:16px; margin-top:8px;}
-    .print-toc{page-break-after:always;}
-    .print-toc h2{font-family:'Caveat',cursive; color:#7a1f2b; font-size:30px;}
-    .print-toc ol{font-size:15px; line-height:2;}
-    .print-chart{page-break-inside:avoid; page-break-after:always; padding-top:10px;}
-    .print-chart:last-child{page-break-after:auto;}
-    .print-chart h2{font-family:'Caveat',cursive; font-weight:700; color:#7a1f2b; font-size:32px; margin:0 0 2px;}
-    .print-chart .byline{color:#555; font-size:14px; margin-bottom:14px;}
-    .print-chordline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:#7a1f2b; font-weight:600; font-size:14px; line-height:1; margin:0;}
-    .print-lyricline{white-space:pre; font-family:'IBM Plex Mono',monospace; color:#000; font-size:14.5px; line-height:1.9; margin:0 0 2px;}
-    .print-lyricline.blank{height:14px;}
-  }
-  @media (max-width:560px){ .row3{grid-template-columns:1fr;} }
 </style>
+
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
+
 </head>
 <body>
-<div id="root" class="app">Cargando cancionero…</div>
-<div id="printSheet"></div>
+<div class="app">
+<aside>
+  <div class="brand"><div class="logo">♫</div><div><h1>Mi Cancionero</h1><span>rápido para tocar</span></div></div>
+  <nav>
+    <button class="nav-btn active" data-view="home">⌂ Inicio</button>
+    <button class="nav-btn" data-view="library">♪ Biblioteca</button>
+    <button class="nav-btn" data-view="repertoires">☷ Repertorios</button>
+    <button class="nav-btn" data-view="search">⌕ Buscar canción</button>
+  </nav>
+  <button class="ghost cloud-btn" onclick="openCloudPanel()">☁ Firebase</button>
+  <div id="sidebarSync" class="sync-pill"><span class="sync-dot"></span><span>Solo en este dispositivo</span></div>
+  <div class="aside-foot">Busca automáticamente y pega una cifra completa solo cuando la necesites. Sin configuraciones extra.</div>
+</aside>
+
+<main>
+<section id="home" class="view active">
+  <div class="topbar">
+    <div><div class="eyebrow">Tu espacio musical</div><h2>¿Qué quieres tocar hoy?</h2><p class="subtitle">Busca una canción, guarda su ficha y deja la cifra lista en un solo pegado.</p></div>
+    <button class="primary" onclick="go('search')">Buscar canción</button>
+  </div>
+  <div class="hero">
+    <div><h3>Menos configuración. Más tocar.</h3><p>La app encuentra título, artista, álbum, portada y letra cuando está disponible. Para tener acordes, pegas una cifra una vez y queda guardada para siempre.</p>
+      <div class="searchbox"><input id="homeSearch" placeholder="Ej.: Queen a kind of magic" onkeydown="if(event.key==='Enter')searchFromHome()"><button class="primary" onclick="searchFromHome()">Buscar</button></div>
+    </div>
+    <div class="hero-art">♪</div>
+  </div>
+  <div class="section-head"><div><h3>Últimas canciones</h3><p>Tu repertorio reciente.</p></div><button class="ghost" onclick="go('library')">Ver biblioteca</button></div>
+  <div id="recentSongs" class="grid"></div>
+</section>
+
+<section id="search" class="view">
+  <div class="topbar"><div><div class="eyebrow">Buscar canción</div><h2>Encuentra la versión correcta</h2><p class="subtitle">Portada, álbum y año se cargan automáticamente.</p></div></div>
+  <div class="search-panel">
+    <div class="big-search"><input id="externalSearch" placeholder="Canción + artista" onkeydown="if(event.key==='Enter')searchMusic()"><button class="primary" onclick="searchMusic()">Buscar</button></div>
+    <div id="searchStatus"></div><div id="searchResults" class="results"></div>
+  </div>
+</section>
+
+<section id="library" class="view">
+  <div class="topbar"><div><div class="eyebrow">Biblioteca</div><h2>Tus canciones</h2><p class="subtitle">Busca, filtra y abre lo que quieras tocar.</p></div><button class="primary" onclick="go('search')">Agregar canción</button></div>
+  <div class="backup-bar">
+    <button class="ghost" onclick="exportLibrary()">Exportar biblioteca</button>
+    <label class="ghost" style="cursor:pointer">Importar biblioteca<input id="importFile" type="file" accept=".json,application/json" style="display:none" onchange="importLibrary(event)"></label>
+  </div>
+  <div class="library-toolbar">
+    <input id="librarySearch" placeholder="Buscar…" oninput="renderLibrary()">
+    <select id="libraryFilter" onchange="renderLibrary()">
+      <option value="all">Todas</option><option value="chords">Con acordes</option><option value="lyrics">Solo letra</option>
+    </select>
+  </div>
+  <div id="libraryGrid" class="grid"></div>
+</section>
+
+<section id="repertoires" class="view">
+  <div class="topbar"><div><div class="eyebrow">Repertorios</div><h2>Arma tus sets</h2></div><button class="primary" onclick="newRep()">Nuevo repertorio</button></div>
+  <div id="repList" class="rep-list"></div>
+</section>
+
+<section id="player" class="view">
+  <div class="player-shell">
+    <div class="player-head">
+      <div class="player-meta">
+        <img id="pCover" class="player-cover" alt="">
+        <div class="player-title">
+          <button class="ghost back-btn" style="margin-bottom:10px" onclick="go('library')">← Biblioteca</button>
+          <h2 id="pTitle"></h2><p id="pArtist"></p><div id="pBadges" class="badges"></div>
+        </div>
+      </div>
+      <div id="playerControls" class="player-controls"></div>
+    </div>
+
+    <div id="repertoirePicker" class="rep-picker"></div>
+    <div id="modeTabs" class="tabs"></div>
+    <div id="contentArea"></div>
+    <div id="inlineEditor" class="editor-panel" style="display:none"></div>
+
+    <div id="pasteBox" class="quick-paste">
+      <h3>Agregar o reemplazar cifra</h3>
+      <p>Pega aquí una versión con letra + acordes. La app detecta automáticamente las líneas de acordes y las secciones.</p>
+      <textarea id="pasteText" placeholder="[Verse]
+Em              G
+Another one bites the dust...
+
+o también:
+
+Em   G   D   A
+Texto de la canción…"></textarea>
+      <div class="paste-actions">
+        <button class="primary" onclick="savePastedChart()">Guardar cifra</button>
+        <button class="ghost" onclick="pasteFromClipboard()">Pegar desde portapapeles</button>
+        <button class="ghost" onclick="clearChart()">Eliminar cifra</button>
+      </div>
+    </div>
+
+    <div id="pCopyright" class="copyright"></div>
+  </div>
+</section>
+</main>
+</div>
+
+
+<div id="cloudPanel" class="cloud-panel" onclick="if(event.target===this)closeCloudPanel()">
+  <div class="cloud-card">
+    <div class="eyebrow">Firebase compartido</div>
+    <h3>Una biblioteca para todos</h3>
+    <p>No hay cuentas ni contraseñas. La app se autentica anónimamente en segundo plano y todos los dispositivos conectados ven la misma biblioteca.</p>
+
+    <div class="cloud-grid">
+      <label class="full">API key
+        <input id="fbApiKey" placeholder="AIza...">
+      </label>
+      <label>Auth domain
+        <input id="fbAuthDomain" placeholder="tu-proyecto.firebaseapp.com">
+      </label>
+      <label>Project ID
+        <input id="fbProjectId" placeholder="tu-proyecto">
+      </label>
+      <label>Storage bucket
+        <input id="fbStorageBucket" placeholder="tu-proyecto.firebasestorage.app">
+      </label>
+      <label>Messaging sender ID
+        <input id="fbMessagingSenderId" placeholder="123456789">
+      </label>
+      <label class="full">App ID
+        <input id="fbAppId" placeholder="1:123456789:web:...">
+      </label>
+    </div>
+
+    <div class="cloud-actions">
+      <button class="primary" onclick="saveFirebaseConfig()">Guardar configuración</button>
+      <button class="ghost" onclick="testFirebase()">Probar conexión</button>
+    </div>
+
+    <div class="cloud-actions">
+      <button class="secondary" onclick="uploadLibraryToFirebase()">Subir biblioteca actual</button>
+      <button class="ghost" onclick="downloadLibraryFromFirebase()">Traer biblioteca</button>
+    </div>
+
+    <div id="cloudStatus" class="cloud-status">Firebase aún no está configurado.</div>
+
+    <div class="note" style="margin-top:14px">
+      <strong>En Firebase Console:</strong> habilita <strong>Anonymous</strong> en Authentication y crea una base de <strong>Cloud Firestore</strong>. Después pega las reglas del archivo que acompaña esta versión.
+    </div>
+
+    <div class="cloud-actions">
+      <button class="ghost" onclick="closeCloudPanel()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
 
 <script>
-(function(){
-  "use strict";
-  const STORAGE_KEY = "songs";
-  const REP_KEY = "repertorios";
-  const API_KEY_LS = "cancionero_openai_key";
-  const WORKER_URL_LS = "cancionero_worker_url";
-  const RITMOS = ["Cueca","Tonada","Vals","Balada","Cumbia","Rock/Pop","Otro"];
-  const root = document.getElementById("root");
+const placeholderCover="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="#ebe6dc"/><circle cx="150" cy="150" r="72" fill="#15636b" opacity=".12"/><text x="150" y="175" text-anchor="middle" font-size="86" font-family="Arial" fill="#15636b">♪</text></svg>`);
+let songs=JSON.parse(localStorage.getItem("mc7_songs")||"[]");
+let reps=JSON.parse(localStorage.getItem("mc7_reps")||"[]");
+let currentSong=null,currentFont=19,scrollTimer=null,mode="lyrics";
 
-  // Storage works two ways: inside Claude (window.storage, shared automáticamente),
-  // o standalone/GitHub Pages (localStorage, por navegador — usa Exportar/Importar para sincronizar).
-  const hasClaudeStorage = (typeof window.storage !== "undefined") && window.storage && typeof window.storage.get === "function";
-  const storageAdapter = hasClaudeStorage ? window.storage : {
-    async get(key){
-      try{ const raw = localStorage.getItem("cancionero_"+key); return raw!=null ? {key, value: raw} : null; }
-      catch(e){ return null; }
-    },
-    async set(key, value){
-      try{ localStorage.setItem("cancionero_"+key, value); return {key, value}; }
-      catch(e){ return null; }
-    },
+let firebaseAppRef=null;
+let firebaseAuthRef=null;
+let firebaseDbRef=null;
+let firebaseUser=null;
+let firebaseSaveTimer=null;
+let firebaseUnsubscribe=null;
+let firebaseApplyingRemote=false;
+
+function getFirebaseConfig(){
+  try{return JSON.parse(localStorage.getItem("mc8_shared_firebase_config")||"null")||{}}catch(e){return {}}
+}
+function setCloudStatus(text,type=""){
+  const el=document.getElementById("cloudStatus");
+  if(el){el.textContent=text;el.className="cloud-status "+type}
+}
+function setSidebarSync(text,type=""){
+  const el=document.getElementById("sidebarSync");
+  if(el)el.innerHTML=`<span class="sync-dot ${type}"></span><span>${esc(text)}</span>`;
+}
+function initFirebase(){
+  const cfg=getFirebaseConfig();
+  if(!cfg.apiKey||!cfg.projectId||!window.firebase)return false;
+  try{
+    firebaseAppRef=(firebase.apps&&firebase.apps.length)?firebase.app():firebase.initializeApp(cfg);
+    firebaseAuthRef=firebase.auth();
+    firebaseDbRef=firebase.firestore();
+    return true;
+  }catch(e){
+    console.error(e);
+    setCloudStatus("No pude iniciar Firebase: "+e.message,"bad");
+    setSidebarSync("Error Firebase","bad");
+    return false;
+  }
+}
+function openCloudPanel(){
+  document.getElementById("cloudPanel").classList.add("open");
+  const c=getFirebaseConfig();
+  document.getElementById("fbApiKey").value=c.apiKey||"";
+  document.getElementById("fbAuthDomain").value=c.authDomain||"";
+  document.getElementById("fbProjectId").value=c.projectId||"";
+  document.getElementById("fbStorageBucket").value=c.storageBucket||"";
+  document.getElementById("fbMessagingSenderId").value=c.messagingSenderId||"";
+  document.getElementById("fbAppId").value=c.appId||"";
+  refreshFirebaseState();
+}
+function closeCloudPanel(){document.getElementById("cloudPanel").classList.remove("open")}
+function saveFirebaseConfig(){
+  const cfg={
+    apiKey:document.getElementById("fbApiKey").value.trim(),
+    authDomain:document.getElementById("fbAuthDomain").value.trim(),
+    projectId:document.getElementById("fbProjectId").value.trim(),
+    storageBucket:document.getElementById("fbStorageBucket").value.trim(),
+    messagingSenderId:document.getElementById("fbMessagingSenderId").value.trim(),
+    appId:document.getElementById("fbAppId").value.trim()
   };
-
-  function getApiKey(){ try{ return localStorage.getItem(API_KEY_LS) || ""; }catch(e){ return ""; } }
-  function setApiKey(k){ try{ localStorage.setItem(API_KEY_LS, k); }catch(e){} }
-  function getWorkerUrl(){ try{ return localStorage.getItem(WORKER_URL_LS) || ""; }catch(e){ return ""; } }
-  function setWorkerUrl(u){ try{ localStorage.setItem(WORKER_URL_LS, u); }catch(e){} }
-
-  let state = {
-    songs: [],
-    repertorios: [],
-    activeRepertorioId: null,
-    repSubview: "todas",     // todas | setlist
-    ritmoFilter: null,
-    loaded: false,
-    view: "chat",
-    activeId: null,
-    perf: null,               // {ids:[...], index} when navigating within a set list
-    transpose: 0,
-    preferFlat: false,
-    stageMode: false,
-    autoScroll: false,
-    scrollSpeed: 30,          // px/sec
-    search: "",
-    messages: [
-      {role:"assistant", kind:"text", text:"Hola 👋 Dime qué canción quieres tocar, por ejemplo: “quiero tocar Vamos los dos de Chinoy”. Busco las mejores páginas con la letra y acordes para que las abras, copies y pegues aquí — yo la formateo, tú eliges a qué repertorio va, y la agrego."}
-    ],
-    pending: null,
-    busy: false,
-  };
-
-  async function loadSongs(){
-    try{
-      const res = await storageAdapter.get(STORAGE_KEY, true);
-      state.songs = res && res.value ? JSON.parse(res.value) : [];
-    }catch(e){ state.songs = []; }
-    try{
-      const repRes = await storageAdapter.get(REP_KEY, true);
-      state.repertorios = repRes && repRes.value ? JSON.parse(repRes.value) : [];
-    }catch(e){ state.repertorios = []; }
-
-    let repChanged = false;
-    if(state.repertorios.length === 0){
-      state.repertorios = [{id:"r-fiestas-patrias", name:"Fiestas Patrias", setlist:[]}];
-      repChanged = true;
+  if(!cfg.apiKey||!cfg.authDomain||!cfg.projectId||!cfg.appId){
+    setCloudStatus("Faltan datos obligatorios del firebaseConfig.","bad");
+    return;
+  }
+  localStorage.setItem("mc8_shared_firebase_config",JSON.stringify(cfg));
+  setCloudStatus("Configuración guardada. Recargando…","ok");
+  setTimeout(()=>location.reload(),700);
+}
+async function ensureAnonymousAuth(){
+  if(!firebaseAuthRef&&!initFirebase())return false;
+  if(firebaseAuthRef.currentUser){
+    firebaseUser=firebaseAuthRef.currentUser;
+    return true;
+  }
+  try{
+    const cred=await firebaseAuthRef.signInAnonymously();
+    firebaseUser=cred.user;
+    return true;
+  }catch(e){
+    setCloudStatus("No pude iniciar sesión anónima: "+e.message,"bad");
+    setSidebarSync("Error de acceso","bad");
+    return false;
+  }
+}
+function sharedLibraryRef(){
+  if(!firebaseDbRef)return null;
+  return firebaseDbRef.collection("shared").doc("library");
+}
+async function testFirebase(){
+  if(!await ensureAnonymousAuth())return;
+  try{
+    const ref=sharedLibraryRef();
+    await ref.get();
+    setCloudStatus("Firebase respondió correctamente. La biblioteca compartida está accesible.","ok");
+  }catch(e){
+    setCloudStatus("Firebase respondió con un problema: "+e.message,"bad");
+  }
+}
+async function uploadLibraryToFirebase(silent=false){
+  if(!await ensureAnonymousAuth()){
+    if(!silent)setCloudStatus("No pude autenticar el dispositivo.","bad");
+    return;
+  }
+  const ref=sharedLibraryRef();
+  try{
+    setSidebarSync("Guardando…","busy");
+    await ref.set({
+      songs:songs,
+      reps:reps,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    setSidebarSync("Firebase conectado","ok");
+    if(!silent)setCloudStatus("Biblioteca compartida actualizada.","ok");
+  }catch(e){
+    setSidebarSync("Error al guardar","bad");
+    if(!silent)setCloudStatus("No pude guardar: "+e.message,"bad");
+  }
+}
+async function downloadLibraryFromFirebase(silent=false){
+  if(!await ensureAnonymousAuth()){
+    if(!silent)setCloudStatus("No pude autenticar el dispositivo.","bad");
+    return;
+  }
+  const ref=sharedLibraryRef();
+  try{
+    setSidebarSync("Descargando…","busy");
+    const snap=await ref.get();
+    if(!snap.exists){
+      setSidebarSync("Firebase conectado","ok");
+      if(!silent)setCloudStatus("Todavía no hay biblioteca en Firebase. Puedes subir la actual.");
+      return;
     }
-    state.repertorios.forEach(r=>{ if(!Array.isArray(r.setlist)){ r.setlist = []; repChanged = true; } });
-    state.activeRepertorioId = state.repertorios[0].id;
-
-    let songsChanged = false;
-    state.songs.forEach(s=>{
-      if(!s.repertorioId){ s.repertorioId = state.repertorios[0].id; songsChanged = true; }
-      if(s.ritmo === undefined){ s.ritmo = ""; songsChanged = true; }
-    });
-
-    state.loaded = true;
-    render();
-    if(repChanged) await saveRepertorios();
-    if(songsChanged) await saveSongs();
+    const data=snap.data()||{};
+    firebaseApplyingRemote=true;
+    songs=Array.isArray(data.songs)?data.songs:[];
+    reps=Array.isArray(data.reps)?data.reps:[];
+    localStorage.setItem("mc7_songs",JSON.stringify(songs));
+    localStorage.setItem("mc7_reps",JSON.stringify(reps));
+    firebaseApplyingRemote=false;
+    renderHome();renderLibrary();renderReps();
+    setSidebarSync("Firebase conectado","ok");
+    if(!silent)setCloudStatus("Biblioteca descargada.","ok");
+  }catch(e){
+    firebaseApplyingRemote=false;
+    setSidebarSync("Error al descargar","bad");
+    if(!silent)setCloudStatus("No pude descargar: "+e.message,"bad");
   }
-  async function saveSongs(){
-    try{
-      const ok = await storageAdapter.set(STORAGE_KEY, JSON.stringify(state.songs), true);
-      if(!ok) console.error("No se pudo guardar.");
-    }catch(e){ console.error("Error guardando:", e); }
-  }
-  async function saveRepertorios(){
-    try{
-      const ok = await storageAdapter.set(REP_KEY, JSON.stringify(state.repertorios), true);
-      if(!ok) console.error("No se pudo guardar repertorios.");
-    }catch(e){ console.error("Error guardando repertorios:", e); }
-  }
-
-  function parseChordProLine(line){
-    let lyric = ""; let chordPositions = []; let i = 0;
-    while(i < line.length){
-      if(line[i] === "["){
-        const end = line.indexOf("]", i);
-        if(end === -1){ lyric += line[i]; i++; continue; }
-        chordPositions.push({pos: lyric.length, chord: line.slice(i+1, end)});
-        i = end + 1;
-      } else { lyric += line[i]; i++; }
+}
+async function subscribeSharedLibrary(){
+  if(!await ensureAnonymousAuth())return;
+  if(firebaseUnsubscribe)firebaseUnsubscribe();
+  const ref=sharedLibraryRef();
+  setSidebarSync("Sincronizando…","busy");
+  firebaseUnsubscribe=ref.onSnapshot(snap=>{
+    if(!snap.exists){
+      setSidebarSync("Firebase conectado","ok");
+      return;
     }
-    let chordChars = [];
-    chordPositions.forEach(cp=>{ for(let k=0;k<cp.chord.length;k++){ chordChars[cp.pos+k] = cp.chord[k]; } });
-    let maxLen = Math.max(lyric.length, chordChars.length);
-    let chordStr = "";
-    for(let k=0;k<maxLen;k++){ chordStr += chordChars[k] || " "; }
-    return {chordStr: chordStr.replace(/\s+$/,""), lyricStr: lyric};
+    const data=snap.data()||{};
+    firebaseApplyingRemote=true;
+    songs=Array.isArray(data.songs)?data.songs:[];
+    reps=Array.isArray(data.reps)?data.reps:[];
+    localStorage.setItem("mc7_songs",JSON.stringify(songs));
+    localStorage.setItem("mc7_reps",JSON.stringify(reps));
+    firebaseApplyingRemote=false;
+    renderHome();
+    if(document.getElementById("library").classList.contains("active"))renderLibrary();
+    if(document.getElementById("repertoires").classList.contains("active"))renderReps();
+    setSidebarSync("Firebase conectado","ok");
+    setCloudStatus("Sincronización en tiempo real activa.","ok");
+  },err=>{
+    console.error(err);
+    setSidebarSync("Error de sincronización","bad");
+    setCloudStatus("Error en sincronización: "+err.message,"bad");
+  });
+}
+function scheduleFirebaseSave(){
+  if(firebaseApplyingRemote||!firebaseUser||!firebaseDbRef)return;
+  clearTimeout(firebaseSaveTimer);
+  firebaseSaveTimer=setTimeout(()=>uploadLibraryToFirebase(true),800);
+}
+async function refreshFirebaseState(){
+  if(!firebaseAuthRef&&!initFirebase()){
+    setSidebarSync("Solo en este dispositivo","");
+    setCloudStatus("Firebase aún no está configurado.");
+    return;
   }
-  const NOTES_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const NOTES_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-  const SOLFEGE_TO_LETTER = {Do:'C', Re:'D', Mi:'E', Fa:'F', Sol:'G', La:'A', Si:'B'};
-  const LETTER_TO_SOLFEGE = {C:'Do', D:'Re', E:'Mi', F:'Fa', G:'Sol', A:'La', B:'Si'};
-
-  function normalizeAcc(a){ if(a==='♯') return '#'; if(a==='♭') return 'b'; return a||''; }
-
-  function parseNoteToken(token){
-    let m = token.match(/^(Sol|Do|Re|Mi|Fa|La|Si)(#|b|♯|♭)?(.*)$/);
-    if(m) return {root:m[1], acc:normalizeAcc(m[2]), rest:m[3], type:"solfege"};
-    m = token.match(/^([A-G])(#|b|♯|♭)?(.*)$/);
-    if(m) return {root:m[1], acc:normalizeAcc(m[2]), rest:m[3], type:"letter"};
-    return null;
+  if(await ensureAnonymousAuth()){
+    setSidebarSync("Firebase conectado","ok");
+    setCloudStatus("Conectado de forma anónima. No necesitas cuenta.","ok");
   }
-
-  function transposeSingleNote(token, semis, preferFlat){
-    const parsed = parseNoteToken(token);
-    if(!parsed) return token;
-    const letter = parsed.type==="solfege" ? SOLFEGE_TO_LETTER[parsed.root] : parsed.root;
-    const name = letter + parsed.acc;
-    let idx = NOTES_SHARP.indexOf(name);
-    if(idx===-1) idx = NOTES_FLAT.indexOf(name);
-    if(idx===-1) return token;
-    const newIdx = ((idx + semis) % 12 + 12) % 12;
-    const table = preferFlat ? NOTES_FLAT : NOTES_SHARP;
-    const newLetterName = table[newIdx]; // e.g. "C#" or "Db"
-    const mm = newLetterName.match(/^([A-G])(#|b)?$/);
-    const newRoot = parsed.type==="solfege" ? LETTER_TO_SOLFEGE[mm[1]] : mm[1];
-    return newRoot + (mm[2]||"") + parsed.rest;
+}
+async function firebaseBootstrap(){
+  if(!initFirebase()){
+    setSidebarSync("Solo en este dispositivo","");
+    return;
   }
-
-  function transposeChordToken(chord, semis, preferFlat){
-    if(semis === 0) return chord;
-    // handle slash/bass chords like G/B, D/F#, Do/Mi
-    return chord.split("/").map(part => transposeSingleNote(part, semis, preferFlat)).join("/");
+  if(await ensureAnonymousAuth()){
+    setSidebarSync("Sincronizando…","busy");
+    subscribeSharedLibrary();
   }
-  function transposeChordProText(text, semis, preferFlat){
-    if(semis === 0) return text;
-    return text.replace(/\[([^\]]+)\]/g, (m, chord)=> "[" + transposeChordToken(chord, semis, preferFlat) + "]");
+}
+
+
+function persist(){
+  localStorage.setItem("mc7_songs",JSON.stringify(songs));
+  localStorage.setItem("mc7_reps",JSON.stringify(reps));
+  scheduleFirebaseSave();
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function toast(msg){const e=document.getElementById("toast");e.textContent=msg;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)}
+function go(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById(v).classList.add("active");document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.body.classList.remove("stage-mode");if(v==="home")renderHome();if(v==="library")renderLibrary();if(v==="repertoires")renderReps();window.scrollTo({top:0,behavior:"smooth"})}
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
+
+function songCard(s){
+ return `<article class="card"><div class="song-card"><img class="cover" src="${esc(s.cover||placeholderCover)}"><div class="song-info">
+ <div class="song-title">${esc(s.title)}</div><div class="song-artist">${esc(s.artist)}</div><div class="song-album">${esc(s.album||"")}${s.year?` · ${esc(s.year)}`:""}</div>
+ <div class="badges">${s.chart?`<span class="badge b-chords">Acordes listos</span>`:s.lyrics?`<span class="badge b-lyrics">Letra lista</span>`:`<span class="badge b-auto">Ficha lista</span>`}${s.key?`<span class="badge b-tone">Tono ${esc(s.key)}</span>`:""}</div>
+ <div class="song-actions"><button class="primary" onclick="openSong('${s.id}')">Tocar</button><button class="ghost" onclick="addToRep('${s.id}')">＋ Repertorio</button></div>
+ </div></div></article>`
+}
+function renderHome(){document.getElementById("recentSongs").innerHTML=songs.length?songs.slice(-3).reverse().map(songCard).join(""):`<div class="card">Todavía no has agregado canciones.</div>`}
+function renderLibrary(){const q=(document.getElementById("librarySearch")?.value||"").toLowerCase(),f=document.getElementById("libraryFilter")?.value||"all";const list=songs.filter(s=>(!q||`${s.title} ${s.artist} ${s.album}`.toLowerCase().includes(q))&&(f==="all"||(f==="chords"&&s.chart)||(f==="lyrics"&&s.lyrics&&!s.chart)));document.getElementById("libraryGrid").innerHTML=list.length?list.map(songCard).join(""):`<div class="card">No encontré canciones.</div>`}
+function repRow(r){return `<div class="rep"><div><strong>${esc(r.name)}</strong><br><small>${r.songIds.length} canciones</small></div><button class="ghost" onclick="openRep('${r.id}')">Abrir</button></div>`}
+function renderReps(){document.getElementById("repList").innerHTML=reps.length?reps.map(repRow).join(""):`<div class="card">Todavía no tienes repertorios.</div>`}
+function newRep(){const n=prompt("Nombre del repertorio:");if(!n)return;reps.push({id:crypto.randomUUID(),name:n,songIds:[]});persist();renderReps()}
+function addToRep(id){if(!reps.length){newRep();if(!reps.length)return}const opts=reps.map((r,i)=>`${i+1}. ${r.name}`).join("\n");const n=Number(prompt(`¿A cuál repertorio?\n${opts}`))-1;if(n<0||n>=reps.length)return;if(!reps[n].songIds.includes(id))reps[n].songIds.push(id);persist();toast("Agregada al repertorio")}
+function openRep(id){const r=reps.find(x=>x.id===id);if(!r||!r.songIds.length){toast("Repertorio vacío");return}const s=songs.find(x=>x.id===r.songIds[0]);if(s)openSong(s.id)}
+
+function searchFromHome(){const q=document.getElementById("homeSearch").value.trim();go("search");document.getElementById("externalSearch").value=q;if(q)searchMusic()}
+function searchMusic(){
+ const term=document.getElementById("externalSearch").value.trim();if(!term)return;
+ document.getElementById("searchStatus").innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">Buscando “${esc(term)}”…</div>`;document.getElementById("searchResults").innerHTML="";
+ const cb="itunes_"+Date.now();window[cb]=data=>{try{renderSearchResults((data.results||[]).slice(0,12))}finally{delete window[cb];script.remove()}};
+ const script=document.createElement("script");script.onerror=()=>{document.getElementById("searchStatus").innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">No pude conectar con la búsqueda.</div>`;delete window[cb];script.remove()};
+ script.src="https://itunes.apple.com/search?media=music&entity=song&limit=12&country=CL&term="+encodeURIComponent(term)+"&callback="+cb;document.body.appendChild(script)
+}
+function renderSearchResults(rs){
+ const st=document.getElementById("searchStatus"),box=document.getElementById("searchResults");if(!rs.length){st.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">No encontré resultados.</div>`;box.innerHTML="";return}st.innerHTML="";
+ box.innerHTML=rs.map(r=>{const cover=(r.artworkUrl100||"").replace("100x100bb","600x600bb"),year=r.releaseDate?new Date(r.releaseDate).getFullYear():"",duration=Math.round((r.trackTimeMillis||0)/1000);const p=encodeURIComponent(JSON.stringify({title:r.trackName||"",artist:r.artistName||"",album:r.collectionName||"",year,cover,duration}));return `<article class="result"><img src="${esc(cover||placeholderCover)}"><div><div class="result-title">${esc(r.trackName)}</div><div class="result-meta">${esc(r.artistName)}<br>${esc(r.collectionName||"")}${year?` · ${year}`:""}</div></div><button class="primary" onclick="addResult('${p}')">Agregar</button></article>`}).join("")
+}
+async function addResult(p){
+ const d=JSON.parse(decodeURIComponent(p));let s=songs.find(x=>x.title===d.title&&x.artist===d.artist&&x.album===d.album);
+ if(!s){s={id:crypto.randomUUID(),...d,lyrics:"",chart:null,key:""};songs.push(s);persist()}
+ currentSong=s;openSong(s.id);
+ if(!s.lyrics)fetchLyrics(s);
+}
+async function fetchLyrics(s){
+ try{
+  const params=new URLSearchParams({track_name:s.title,artist_name:s.artist});
+  const res=await fetch("https://lrclib.net/api/search?"+params.toString());
+  if(!res.ok)throw new Error();
+  const arr=await res.json();
+  if(Array.isArray(arr)&&arr.length){
+    const best=arr.find(x=>x.plainLyrics)||arr[0];
+    s.lyrics=best.plainLyrics||"";
+    persist();if(currentSong?.id===s.id)renderPlayer();
   }
+ }catch(e){}
+}
 
-  const MODEL_TEXT = "gpt-4.1";
-  const MODEL_SEARCH = "gpt-4.1";
+function looksLikeChord(tok){return /^(?:[A-G](?:#|b)?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-G](?:#|b)?)?|N\.?C\.?)$/.test(tok)}
+function isChordLine(line){const t=line.trim().split(/\s+/).filter(Boolean);if(!t.length)return false;const m=t.filter(looksLikeChord).length;return m>=1&&m/t.length>=.65}
+function isSectionLine(line){const c=line.trim().replace(/[\[\]:]/g,"").trim();return /^(intro|verse|verso|chorus|coro|bridge|puente|pre.?chorus|pre.?coro|outro|solo|interlude|estrofa|refrain|estribillo|instrumental)(\s*\d+)?$/i.test(c)}
+function parseChart(txt){return String(txt||"").replace(/\r/g,"").split("\n").map(line=>isSectionLine(line)?{type:"section",text:line.trim()}:isChordLine(line)?{type:"chords",text:line.replace(/\t/g,"    ")}:{type:"lyrics",text:line})}
+function detectKey(chart){const counts={};chart.filter(x=>x.type==="chords").forEach(x=>x.text.trim().split(/\s+/).forEach(tok=>{if(looksLikeChord(tok)){const r=(tok.match(/^[A-G](?:#|b)?/)||[])[0];if(r)counts[r]=(counts[r]||0)+1}}));return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0]||""}
+const notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],flats={"Db":"C#","Eb":"D#","Gb":"F#","Ab":"G#","Bb":"A#"};
+function transposeChord(chord,shift){return chord.replace(/^([A-G](?:#|b)?)/,(_,root)=>{const i=notes.indexOf(flats[root]||root);return i<0?root:notes[(i+shift+120)%12]}).replace(/\/([A-G](?:#|b)?)/g,(_,root)=>{const i=notes.indexOf(flats[root]||root);return i<0?"/"+root:"/"+notes[(i+shift+120)%12]})}
+function transposeChart(delta){if(!currentSong?.chart)return;currentSong.shift=(currentSong.shift||0)+delta;persist();renderPlayer()}
+function renderChart(chart,shift=0){return chart.map(r=>r.type==="section"?`<div class="section-line">${esc(r.text)}</div>`:r.type==="chords"?`<div class="chord-line">${esc(r.text.replace(/\S+/g,t=>looksLikeChord(t)?transposeChord(t,shift):t))}</div>`:`<div>${esc(r.text)}</div>`).join("")}
+async function pasteFromClipboard(){try{document.getElementById("pasteText").value=await navigator.clipboard.readText()}catch(e){toast("El navegador no permitió leer el portapapeles")}}
+function savePastedChart(){const txt=document.getElementById("pasteText").value;if(!txt.trim()){toast("Pega una cifra primero");return}const parsed=parseChart(txt);if(!parsed.some(x=>x.type==="chords")){toast("No detecté líneas de acordes");return}currentSong.chart=parsed;currentSong.shift=0;currentSong.key=detectKey(parsed);persist();mode="chart";document.getElementById("pasteText").value="";renderPlayer();toast("Cifra guardada")}
+function clearChart(){if(!currentSong?.chart)return;if(!confirm("¿Eliminar la cifra guardada?"))return;currentSong.chart=null;currentSong.shift=0;currentSong.key="";persist();mode=currentSong.lyrics?"lyrics":"chart";renderPlayer()}
 
-  function extractResponsesText(data){
-    if(typeof data.output_text === "string" && data.output_text) return data.output_text;
-    let text = "";
-    (data.output||[]).forEach(item=>{
-      if(item.type === "message" && Array.isArray(item.content)){
-        item.content.forEach(c=>{ if(c.type === "output_text" && c.text) text += c.text; });
-      }
-    });
-    return text.trim();
-  }
 
-  async function callOpenAI({system, userText, useSearch}){
-    const key = getApiKey();
-    const workerUrl = getWorkerUrl();
-    if(!key) throw new Error("Falta tu API key de OpenAI — configúrala con ⚙");
-    if(!workerUrl) throw new Error("Falta la URL de tu proxy (Cloudflare Worker) — configúrala con ⚙");
-    const body = { model: useSearch ? MODEL_SEARCH : MODEL_TEXT, instructions: system, input: userText };
-    if(useSearch) body.tools = [{type:"web_search"}];
-    const response = await fetch(workerUrl, {
-      method:"POST",
-      headers: {"Content-Type":"application/json", "x-openai-key": key},
-      body: JSON.stringify(body)
-    });
-    if(!response.ok){
-      const errBody = await response.text().catch(()=> "");
-      throw new Error("API " + response.status + (errBody ? (" — " + errBody.slice(0,150)) : ""));
-    }
-    const data = await response.json();
-    return extractResponsesText(data);
-  }
+function renderRepertoirePicker(){
+ const box=document.getElementById("repertoirePicker");
+ if(!box||!currentSong)return;
+ const options=reps.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
+ box.innerHTML=`
+   <select id="repSelect">
+     <option value="">Agregar a repertorio…</option>
+     ${options}
+   </select>
+   <button class="ghost" onclick="addCurrentToSelectedRep()">Agregar</button>
+   <button class="ghost" onclick="createRepAndAddCurrent()">＋ Nuevo repertorio</button>
+ `;
+}
+function addCurrentToSelectedRep(){
+ const id=document.getElementById("repSelect")?.value;
+ if(!id){toast("Elige un repertorio");return}
+ const r=reps.find(x=>x.id===id);
+ if(!r)return;
+ if(!r.songIds.includes(currentSong.id))r.songIds.push(currentSong.id);
+ persist();
+ toast("Agregada a "+r.name);
+}
+function createRepAndAddCurrent(){
+ const name=prompt("Nombre del nuevo repertorio:");
+ if(!name)return;
+ const r={id:crypto.randomUUID(),name,songIds:[currentSong.id]};
+ reps.push(r);
+ persist();
+ renderRepertoirePicker();
+ toast("Repertorio creado y canción agregada");
+}
+function currentEditableText(){
+ if(currentSong.chart){
+   return currentSong.chart.map(r=>r.text).join("\n");
+ }
+ return currentSong.lyrics||"";
+}
+function openInlineEditor(){
+ const box=document.getElementById("inlineEditor");
+ box.style.display="block";
+ box.innerHTML=`
+   <h3>Editar canción</h3>
+   <p style="color:var(--muted);margin:6px 0 12px">Puedes editar directamente la letra o la cifra completa. Si contiene líneas de acordes, se guardará como letra + acordes.</p>
+   <textarea id="inlineEditText">${esc(currentEditableText())}</textarea>
+   <div class="inline-tools">
+     <button class="primary" onclick="saveInlineEditor()">Guardar cambios</button>
+     <button class="ghost" onclick="cancelInlineEditor()">Cancelar</button>
+   </div>`;
+ box.scrollIntoView({behavior:"smooth",block:"center"});
+}
+function saveInlineEditor(){
+ const txt=document.getElementById("inlineEditText")?.value??"";
+ if(!txt.trim()){toast("El contenido está vacío");return}
+ const parsed=parseChart(txt);
+ const hasChords=parsed.some(x=>x.type==="chords");
+ if(hasChords){
+   currentSong.chart=parsed;
+   currentSong.key=detectKey(parsed);
+   currentSong.shift=0;
+   // Derive a clean-ish lyrics version too
+   currentSong.lyrics=parsed.filter(x=>x.type==="lyrics").map(x=>x.text).join("\n").trim();
+   mode="chart";
+ }else{
+   currentSong.lyrics=txt;
+   currentSong.chart=null;
+   currentSong.key="";
+   currentSong.shift=0;
+   mode="lyrics";
+ }
+ persist();
+ document.getElementById("inlineEditor").style.display="none";
+ renderPlayer();
+ toast("Cambios guardados");
+}
+function cancelInlineEditor(){
+ document.getElementById("inlineEditor").style.display="none";
+}
+function exportLibrary(){
+ const payload={version:1,exportedAt:new Date().toISOString(),songs,reps};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="mi_cancionero_respaldo.json";
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importLibrary(event){
+ const file=event.target.files?.[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+   try{
+     const data=JSON.parse(reader.result);
+     if(!Array.isArray(data.songs)||!Array.isArray(data.reps))throw new Error("Formato inválido");
+     songs=data.songs;
+     reps=data.reps;
+     persist();
+     renderLibrary();
+     renderHome();
+     toast("Biblioteca importada");
+   }catch(e){
+     toast("No pude importar ese archivo");
+   }
+ };
+ reader.readAsText(file);
+ event.target.value="";
+}
 
-  async function aiFindSources(userQuery){
-    const system = "El usuario quiere tocar una canción y busca dónde ver su letra y acordes. " +
-      "IMPORTANTE: nunca reproduzcas letra, acordes completos ni fragmentos extensos de la canción en tu respuesta — solo metadatos. " +
-      "Identifica el título y artista más probable a partir del pedido del usuario, y busca en la web páginas confiables donde pueda verla " +
-      "(ej. cifraclub.com.br, lacuerda.net, ultimate-guitar.com, chordie, letras.com). " +
-      "Responde ÚNICAMENTE con JSON válido, sin texto extra ni bloques de código, con esta forma exacta: " +
-      '{"title":"...", "artist":"...", "sources":[{"label":"...", "domain":"...", "url":"..."}]}. ' +
-      "Máximo 4 fuentes reales encontradas en la búsqueda (no inventes URLs). Si no encuentras nada, usa sources: [].";
-    const raw = await callOpenAI({system, userText: userQuery, useSearch: true});
-    const clean = raw.replace(/```json|```/g, "").trim();
-    const jsonStart = clean.indexOf("{");
-    const jsonStr = jsonStart >= 0 ? clean.slice(jsonStart) : clean;
-    return JSON.parse(jsonStr);
-  }
+function openSong(id){currentSong=songs.find(s=>s.id===id);if(!currentSong)return;currentFont=19;mode=currentSong.chart?"chart":"lyrics";go("player");renderPlayer()}
+function setMode(m){mode=m;renderPlayer()}
+function renderPlayer(){
+ const s=currentSong;if(!s)return;
+ document.getElementById("pCover").src=s.cover||placeholderCover;document.getElementById("pTitle").textContent=s.title;document.getElementById("pArtist").textContent=[s.artist,s.album,s.year].filter(Boolean).join(" · ");
+ document.getElementById("pBadges").innerHTML=`${s.chart?`<span class="badge b-chords">Acordes listos</span>`:s.lyrics?`<span class="badge b-lyrics">Letra lista</span>`:`<span class="badge b-auto">Ficha lista</span>`}${s.key?`<span class="badge b-tone">Tono probable ${esc(transposeChord(s.key,s.shift||0))}</span>`:""}`;
+ document.getElementById("playerControls").innerHTML=s.chart?`<button class="icon-btn" onclick="transposeChart(-1)">♭</button><button class="icon-btn" onclick="transposeChart(1)">♯</button><button class="icon-btn" onclick="fontSize(-1)">A−</button><button class="icon-btn" onclick="fontSize(1)">A+</button><button class="ghost" onclick="openInlineEditor()">Editar</button><button class="icon-btn" onclick="toggleScroll()">⇣ Auto</button><button class="primary" onclick="toggleStage()">Modo escenario</button>`:`<button class="icon-btn" onclick="fontSize(-1)">A−</button><button class="icon-btn" onclick="fontSize(1)">A+</button><button class="ghost" onclick="openInlineEditor()">Editar</button><button class="primary" onclick="toggleStage()">Modo escenario</button>`;
+ const tabs=[];if(s.lyrics)tabs.push(["lyrics","Letra"]);if(s.chart)tabs.push(["chart","Letra + acordes"]);
+ if(!tabs.some(x=>x[0]===mode))mode=tabs[0]?.[0]||"lyrics";
+ document.getElementById("modeTabs").innerHTML=tabs.map(([id,label])=>`<button class="tab ${mode===id?"active":""}" onclick="setMode('${id}')">${label}</button>`).join("");
+ const area=document.getElementById("contentArea");
+ if(mode==="chart"&&s.chart){area.innerHTML=`<div id="sheetBox" class="sheet chords">${renderChart(s.chart,s.shift||0)}</div>`}
+ else if(s.lyrics){area.innerHTML=`<div id="sheetBox" class="sheet lyrics">${esc(s.lyrics)}</div>`}
+ else{area.innerHTML=`<div class="empty"><h3>La ficha está lista</h3><p>Pega una cifra completa y queda lista para tocar.</p></div>`}
+ renderRepertoirePicker();
+ const sb=document.getElementById("sheetBox");if(sb)sb.style.fontSize=currentFont+"px";
+ document.getElementById("pCopyright").innerHTML=`<strong>Fuentes y derechos</strong><br>${s.lyrics?"Letra obtenida automáticamente desde LRCLIB cuando estuvo disponible. ":""}La cifra con acordes se guarda a partir del texto que tú incorporas. El cancionero no reclama propiedad sobre obras de terceros.`;
+}
+function fontSize(n){currentFont=Math.max(14,Math.min(36,currentFont+n));const e=document.getElementById("sheetBox");if(e)e.style.fontSize=currentFont+"px"}
+function toggleScroll(){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;toast("Auto-scroll detenido")}else{scrollTimer=setInterval(()=>window.scrollBy(0,1),35);toast("Auto-scroll activado")}}
+function toggleStage(){document.body.classList.toggle("stage-mode")}
 
-  async function aiFormatToChordPro(rawText){
-    const system = "Recibirás un texto que el propio usuario pegó: letra y acordes de una canción que ya tiene. " +
-      "Reformatea al formato ChordPro colocando cada acorde entre corchetes [Así] justo antes de la sílaba donde corresponde, " +
-      "según su posición en el texto original (estén en línea aparte o ya mezclados). No agregues, corrijas ni inventes letra ni acordes nuevos. " +
-      "MUY IMPORTANTE — estrofas y coros repetidos: en muchas hojas de acordes, cuando una estrofa o el coro se repite, la segunda vez solo escriben la letra " +
-      "(o ponen 'Coro', 'Estribillo (bis)', 'x2', '(repite)') SIN volver a poner los acordes, asumiendo que el lector recuerda cuáles eran. Tú NO debes dejar esos acordes implícitos: " +
-      "cuando detectes que una sección de letra es una repetición de una estrofa o coro anterior (misma letra, o una marca como 'Coro'/'Estribillo'/'bis'/'x2'), " +
-      "escribe esa repetición completa con los mismos acordes que tenía la primera vez que apareció esa letra en el texto, en vez de dejarla sin acordes o resumirla. " +
-      "Esto es solo reordenar y completar lo que el propio usuario ya escribió una vez en su texto — no estás agregando contenido nuevo. " +
-      "Conserva los saltos de línea entre estrofas. Devuelve ÚNICAMENTE el texto convertido, sin explicaciones ni comillas.";
-    return await callOpenAI({system, userText: rawText, useSearch: false});
-  }
-
-  function h(tag, attrs, children){
-    const el = document.createElement(tag);
-    if(attrs) Object.keys(attrs).forEach(k=>{
-      if(k==="class") el.className = attrs[k];
-      else if(k==="html") el.innerHTML = attrs[k];
-      else if(k.startsWith("on")) el.addEventListener(k.slice(2), attrs[k]);
-      else el.setAttribute(k, attrs[k]);
-    });
-    (children||[]).forEach(c=>{ if(c==null) return; el.appendChild(typeof c==="string"?document.createTextNode(c):c); });
-    return el;
-  }
-
-  function bunting(n){
-    const b = h("div",{class:"bunting no-print"},[]);
-    for(let i=0;i<n;i++) b.appendChild(h("span",{}));
-    return b;
-  }
-
-  function showConfirm(message, onYes){
-    const overlay = h("div",{class:"overlay no-print"},[]);
-    const modal = h("div",{class:"modal", style:"max-width:380px;"},[
-      h("p",{style:"margin:0 0 18px;font-size:14.5px;"},[message]),
-      h("div",{class:"modal-actions"},[
-        h("button",{class:"btn", onclick:()=>overlay.remove()},["Cancelar"]),
-        h("button",{class:"btn primary", onclick:()=>{ overlay.remove(); onYes(); }},["Confirmar"]),
-      ]),
-    ]);
-    overlay.appendChild(modal);
-    overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-  }
-
-  function showPrompt(message, defaultValue, onSubmit){
-    const overlay = h("div",{class:"overlay no-print"},[]);
-    const input = h("input",{type:"text", value:defaultValue||"", style:"width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:6px;background:var(--board-deep);color:var(--chalk);font-family:'Work Sans',sans-serif;font-size:14px;margin-bottom:16px;"});
-    input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ const v=input.value.trim(); overlay.remove(); if(v) onSubmit(v); } });
-    const modal = h("div",{class:"modal", style:"max-width:380px;"},[
-      h("p",{style:"margin:0 0 10px;font-size:14.5px;"},[message]),
-      input,
-      h("div",{class:"modal-actions"},[
-        h("button",{class:"btn", onclick:()=>overlay.remove()},["Cancelar"]),
-        h("button",{class:"btn primary", onclick:()=>{ const v=input.value.trim(); overlay.remove(); if(v) onSubmit(v); }},["Crear"]),
-      ]),
-    ]);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    setTimeout(()=>input.focus(), 30);
-  }
-
-  function showAlert(message){
-    const overlay = h("div",{class:"overlay no-print"},[]);
-    const modal = h("div",{class:"modal", style:"max-width:380px;"},[
-      h("p",{style:"margin:0 0 18px;font-size:14.5px;"},[message]),
-      h("div",{class:"modal-actions"},[
-        h("button",{class:"btn primary", onclick:()=>overlay.remove()},["Entendido"]),
-      ]),
-    ]);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-  }
-
-  function openSettingsModal(){
-    const overlay = h("div",{class:"overlay no-print"},[]);
-    const keyInput = h("input",{type:"password", value:getApiKey(), placeholder:"sk-…"});
-    const workerInput = h("input",{type:"text", value:getWorkerUrl(), placeholder:"https://tu-worker.tu-usuario.workers.dev"});
-    const status = h("div",{class:"status-line"},[]);
-    const modal = h("div",{class:"modal"},[
-      h("h2",{},["Configuración"]),
-      h("div",{class:"field"},[
-        h("label",{},["API key de OpenAI"]),
-        keyInput,
-        h("p",{style:"font-size:12px;color:var(--chalk-dim);margin-top:6px;line-height:1.5;"},[
-          "Se guarda solo en este navegador. Consíguela en platform.openai.com."
-        ]),
-      ]),
-      h("div",{class:"field"},[
-        h("label",{},["URL de tu proxy (Cloudflare Worker)"]),
-        workerInput,
-        h("p",{style:"font-size:12px;color:var(--chalk-dim);margin-top:6px;line-height:1.5;"},[
-          "OpenAI no permite llamadas directas desde el navegador, por eso las peticiones pasan por un pequeño proxy que tú despliegas gratis en Cloudflare Workers. Instrucciones en el README."
-        ]),
-      ]),
-      status,
-      h("div",{class:"modal-actions"},[
-        h("button",{class:"btn", onclick:()=>overlay.remove()},["Cerrar"]),
-        h("button",{class:"btn primary", onclick:()=>{
-          setApiKey(keyInput.value.trim());
-          setWorkerUrl(workerInput.value.trim());
-          status.textContent="Guardado ✓"; status.classList.remove("error");
-        }},["Guardar"]),
-      ]),
-    ]);
-    overlay.appendChild(modal);
-    overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-  }
-
-  function exportData(){
-    const data = {songs: state.songs, repertorios: state.repertorios, exportedAt: new Date().toISOString()};
-    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "cancionero-backup.json"; a.click();
-    setTimeout(()=>URL.revokeObjectURL(url), 1000);
-  }
-
-  function importData(file){
-    const reader = new FileReader();
-    reader.onload = async ()=>{
-      try{
-        const data = JSON.parse(reader.result);
-        if(!Array.isArray(data.songs) || !Array.isArray(data.repertorios)) throw new Error("formato inválido");
-        state.songs = data.songs;
-        state.repertorios = data.repertorios;
-        state.repertorios.forEach(r=>{ if(!Array.isArray(r.setlist)) r.setlist=[]; });
-        state.activeRepertorioId = state.repertorios[0] ? state.repertorios[0].id : null;
-        render();
-        await saveSongs(); await saveRepertorios();
-        showAlert("Cancionero importado ✓");
-      }catch(e){
-        showAlert("No se pudo leer ese archivo. ¿Es un backup exportado desde esta misma app?");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function render(){
-    root.innerHTML = "";
-    root.classList.toggle("stage-mode", state.stageMode && state.view==="detail");
-    if(!state.loaded){ root.appendChild(h("div",{},["Cargando cancionero…"])); return; }
-
-    root.appendChild(bunting(28));
-    root.appendChild(h("header",{class:"top"},[
-      h("h1",{},["Cancionero"]),
-      h("p",{},["Tus repertorios de letras y acordes"]),
-      h("nav",{class:"tabs no-print"},[
-        h("button",{class: state.view!=="list" && state.view!=="detail" ? "active":"", onclick:()=>{state.view="chat"; render();}},["💬 Agregar"]),
-        h("button",{class: (state.view==="list"||state.view==="detail") ? "active":"", onclick:()=>{state.view="list"; state.stageMode=false; render();}},["🎼 Repertorio (" + state.songs.length + ")"]),
-        h("button",{onclick: openSettingsModal},["⚙"]),
-      ]),
-    ]));
-
-    if(state.view === "chat") root.appendChild(renderChat());
-    else if(state.view === "detail") root.appendChild(renderDetail());
-    else root.appendChild(renderRepertorio());
-
-    root.appendChild(h("footer",{class:"foot no-print"},["Cancionero compartido — visible para todos los que abran este mismo cancionero."]));
-  }
-
-  function renderChat(){
-    const wrap = h("div",{class:"chat-wrap"},[]);
-    const log = h("div",{class:"chat-log"},[]);
-    state.messages.forEach(m=> log.appendChild(renderBubble(m)));
-    if(state.busy){ log.appendChild(h("div",{class:"bubble assistant"},["Buscando fuentes…"])); }
-    wrap.appendChild(log);
-
-    const inputRow = h("div",{class:"chat-input no-print"},[]);
-    const input = h("input",{type:"text", placeholder:"Ej: quiero tocar Vamos los dos de Chinoy"});
-    input.addEventListener("keydown",(e)=>{ if(e.key==="Enter") submitQuery(); });
-    const sendBtn = h("button",{class:"btn primary", onclick:submitQuery},["➤"]);
-    inputRow.appendChild(input); inputRow.appendChild(sendBtn);
-    wrap.appendChild(inputRow);
-
-    async function submitQuery(){
-      const val = input.value.trim();
-      if(!val || state.busy) return;
-      input.value = "";
-      state.messages.push({role:"user", kind:"text", text: val});
-      state.busy = true;
-      render();
-      focusChatInput();
-      try{
-        const result = await aiFindSources(val);
-        if(!result.sources || result.sources.length===0){
-          state.messages.push({role:"assistant", kind:"text",
-            text:"No encontré fuentes automáticamente para “" + val + "”. Puedes buscarla tú mismo y pegar el texto — la agrego igual."});
-        } else {
-          state.messages.push({role:"assistant", kind:"sources", title: result.title, artist: result.artist, sources: result.sources});
-        }
-        state.pending = {title: result.title || val, artist: result.artist || ""};
-        state.messages.push({role:"assistant", kind:"paste", pending: state.pending});
-      }catch(err){
-        state.messages.push({role:"assistant", kind:"text", text:"No pude buscar en este momento (" + err.message + "). Puedes pegar el texto de la canción directamente y la agrego."});
-        state.pending = {title: val, artist:""};
-        state.messages.push({role:"assistant", kind:"paste", pending: state.pending});
-      }
-      state.busy = false;
-      render();
-      focusChatInput();
-    }
-    function focusChatInput(){
-      const i = root.querySelector(".chat-input input");
-      if(i) i.focus();
-    }
-    return wrap;
-  }
-
-  function renderBubble(m){
-    if(m.kind === "text"){
-      return h("div",{class:"bubble " + m.role},[m.text]);
-    }
-    if(m.kind === "sources"){
-      const b = h("div",{class:"bubble assistant"},[
-        "Encontré esto para “" + (m.title||"") + (m.artist ? "” de " + m.artist : "”") + ". Ábrelas, copia el texto y pégalo abajo:",
-      ]);
-      m.sources.forEach(s=>{
-        b.appendChild(h("a",{class:"source-card", href:s.url, target:"_blank", rel:"noopener"},[
-          h("div",{class:"dom"},[s.domain||s.url]),
-          h("div",{class:"ttl"},[s.label||s.url]),
-        ]));
-      });
-      return b;
-    }
-    if(m.kind === "paste"){
-      return renderPasteBubble(m.pending);
-    }
-    return h("div",{});
-  }
-
-  function renderPasteBubble(pending){
-    const b = h("div",{class:"bubble assistant"},["Pega aquí lo que copiaste:"]);
-    const box = h("div",{class:"paste-box"},[]);
-    const ta = h("textarea",{placeholder:"Pega la letra y acordes tal como los copiaste. Puede tener los acordes en línea aparte arriba de la letra — yo la ordeno."},[]);
-    const status = h("div",{class:"status-line"},[]);
-    const titleIn = h("input",{type:"text", value: pending.title||"", placeholder:"Título", style:"margin-bottom:6px;width:100%;padding:8px 10px;border-radius:6px;border:1.5px solid var(--line);background:var(--board-deep);color:var(--chalk);font-family:'Work Sans',sans-serif;font-size:13.5px;"});
-    const authorIn = h("input",{type:"text", value: pending.artist||"", placeholder:"Autor/intérprete", style:"margin-bottom:6px;width:100%;padding:8px 10px;border-radius:6px;border:1.5px solid var(--line);background:var(--board-deep);color:var(--chalk);font-family:'Work Sans',sans-serif;font-size:13.5px;"});
-    const repSelect = h("select",{class:"chat-select"},[]);
-    state.repertorios.forEach(r=>{
-      const opt = h("option",{value:r.id},[r.name]);
-      if(state.activeRepertorioId === r.id) opt.setAttribute("selected","selected");
-      repSelect.appendChild(opt);
-    });
-    const ritmoSelect = h("select",{class:"chat-select"},[]);
-    ritmoSelect.appendChild(h("option",{value:""},["Ritmo (opcional)"]));
-    RITMOS.forEach(r=> ritmoSelect.appendChild(h("option",{value:r},[r])));
-    box.appendChild(titleIn); box.appendChild(authorIn); box.appendChild(repSelect); box.appendChild(ritmoSelect); box.appendChild(ta);
-    const actions = h("div",{class:"paste-actions"},[]);
-    const saveBtn = h("button",{class:"btn primary small", onclick: async ()=>{
-      const raw = ta.value.trim();
-      if(!raw){ status.textContent="Pega el texto primero."; status.classList.add("error"); return; }
-      saveBtn.disabled = true;
-      status.classList.remove("error");
-      status.textContent = "Formateando y guardando…";
-      try{
-        const formatted = await aiFormatToChordPro(raw);
-        const song = {
-          id: "s"+Date.now()+Math.random().toString(36).slice(2,7),
-          title: titleIn.value.trim() || pending.title || "Sin título",
-          author: authorIn.value.trim() || pending.artist || "",
-          repertorioId: repSelect.value || state.activeRepertorioId,
-          ritmo: ritmoSelect.value || "",
-          key:"", capo:"", notes:"",
-          chordproText: formatted, updatedAt: Date.now(),
-        };
-        state.songs.push(song);
-        await saveSongs();
-        state.messages.push({role:"assistant", kind:"text", text:"✅ Agregada “" + song.title + "” a tu repertorio. La puedes ver en la pestaña Repertorio."});
-        render();
-      }catch(err){
-        status.classList.add("error");
-        status.textContent = "No se pudo formatear (" + err.message + "). Intenta de nuevo.";
-        saveBtn.disabled = false;
-      }
-    }},["Formatear y agregar"]);
-    actions.appendChild(saveBtn); actions.appendChild(status);
-    box.appendChild(actions);
-    b.appendChild(box);
-    return b;
-  }
-
-  function filteredSongs(){
-    const q = state.search.trim().toLowerCase();
-    let list = state.songs.filter(s=>s.repertorioId === state.activeRepertorioId);
-    if(state.ritmoFilter) list = list.filter(s=>s.ritmo === state.ritmoFilter);
-    if(q) list = list.filter(s=>(s.title||"").toLowerCase().includes(q) || (s.author||"").toLowerCase().includes(q));
-    return list.slice().sort((a,b)=>(a.title||"").localeCompare(b.title||"","es"));
-  }
-
-  function activeRepertorio(){
-    return state.repertorios.find(r=>r.id===state.activeRepertorioId);
-  }
-
-  function toggleInSetlist(songId){
-    const rep = activeRepertorio();
-    if(!rep) return;
-    const idx = rep.setlist.indexOf(songId);
-    if(idx>=0) rep.setlist.splice(idx,1); else rep.setlist.push(songId);
-    saveRepertorios();
-  }
-
-  function moveInSetlist(songId, dir){
-    const rep = activeRepertorio();
-    if(!rep) return;
-    const idx = rep.setlist.indexOf(songId);
-    const swapWith = idx + dir;
-    if(idx<0 || swapWith<0 || swapWith>=rep.setlist.length) return;
-    [rep.setlist[idx], rep.setlist[swapWith]] = [rep.setlist[swapWith], rep.setlist[idx]];
-    saveRepertorios();
-  }
-
-  function renderRepertorioSelector(){
-    const bar = h("div",{class:"repertorio-bar no-print"},[]);
-    state.repertorios.forEach(r=>{
-      const isActive = r.id === state.activeRepertorioId;
-      const pill = h("div",{class:"rep-pill" + (isActive?" active":"")},[
-        h("span",{class:"name"},[r.name]),
-      ]);
-      pill.addEventListener("click",(e)=>{
-        if(e.target.classList.contains("rep-x")) return;
-        state.activeRepertorioId = r.id; state.search=""; render();
-      });
-      if(state.repertorios.length > 1){
-        const x = h("span",{class:"rep-x"},["✕"]);
-        x.addEventListener("click", (e)=>{
-          e.stopPropagation();
-          showConfirm('¿Eliminar el repertorio "' + r.name + '" y sus canciones?', async ()=>{
-            state.songs = state.songs.filter(s=>s.repertorioId !== r.id);
-            state.repertorios = state.repertorios.filter(rp=>rp.id !== r.id);
-            if(state.activeRepertorioId === r.id) state.activeRepertorioId = state.repertorios[0].id;
-            render();
-            await saveRepertorios(); await saveSongs();
-          });
-        });
-        pill.appendChild(x);
-      }
-      bar.appendChild(pill);
-    });
-    const addBtn = h("button",{class:"rep-add", onclick:()=>{
-      showPrompt("Nombre del nuevo repertorio (ej: Bodas, Peña de amigos):", "", async (name)=>{
-        const rep = {id:"r"+Date.now()+Math.random().toString(36).slice(2,6), name:name, setlist:[]};
-        state.repertorios.push(rep);
-        state.activeRepertorioId = rep.id;
-        render();
-        await saveRepertorios();
-      });
-    }},["+ Repertorio"]);
-    bar.appendChild(addBtn);
-    return bar;
-  }
-
-  function renderRepertorio(){
-    const wrap = h("div",{},[]);
-    wrap.appendChild(renderRepertorioSelector());
-
-    const subtabs = h("div",{class:"rep-subtabs no-print"},[
-      h("button",{class: state.repSubview==="todas"?"active":"", onclick:()=>{state.repSubview="todas"; render();}},["Todas"]),
-      h("button",{class: state.repSubview==="setlist"?"active":"", onclick:()=>{state.repSubview="setlist"; render();}},["⭐ Set list ("+((activeRepertorio()||{}).setlist||[]).length+")"]),
-    ]);
-    wrap.appendChild(subtabs);
-
-    if(state.repSubview === "setlist"){
-      wrap.appendChild(renderSetlist());
-      return wrap;
-    }
-
-    const ritmosPresent = Array.from(new Set(state.songs.filter(s=>s.repertorioId===state.activeRepertorioId && s.ritmo).map(s=>s.ritmo)));
-    if(ritmosPresent.length){
-      const chips = h("div",{class:"ritmo-chips no-print"},[]);
-      chips.appendChild(h("button",{class:"ritmo-chip"+(!state.ritmoFilter?" active":""), onclick:()=>{state.ritmoFilter=null; render();}},["Todos"]));
-      ritmosPresent.forEach(r=>{
-        chips.appendChild(h("button",{class:"ritmo-chip"+(state.ritmoFilter===r?" active":""), onclick:()=>{state.ritmoFilter = state.ritmoFilter===r ? null : r; render();}},[r]));
-      });
-      wrap.appendChild(chips);
-    }
-
-    const bar = h("div",{class:"toolbar no-print"},[]);
-    const input = h("input",{type:"text", placeholder:"Buscar por título o autor…", value: state.search});
-    input.addEventListener("input",(e)=>{ state.search=e.target.value; const old=root.querySelector(".song-list, .empty"); const fresh=renderList(); if(old) old.replaceWith(fresh); });
-    bar.appendChild(input);
-    bar.appendChild(h("button",{class:"btn", onclick:()=>openManualForm()},["+ Manual"]));
-    bar.appendChild(h("button",{class:"btn", onclick: printRepertorio},["Imprimir"]));
-    if(!hasClaudeStorage){
-      bar.appendChild(h("button",{class:"btn", onclick: exportData},["Exportar"]));
-      const fileInput = h("input",{type:"file", accept:"application/json", style:"display:none;"});
-      fileInput.addEventListener("change",(e)=>{ if(e.target.files[0]) importData(e.target.files[0]); e.target.value=""; });
-      const importBtn = h("button",{class:"btn", onclick:()=>fileInput.click()},["Importar"]);
-      bar.appendChild(importBtn); bar.appendChild(fileInput);
-    }
-    wrap.appendChild(bar);
-    wrap.appendChild(renderList());
-    return wrap;
-  }
-
-  function renderSetlist(){
-    const rep = activeRepertorio();
-    const ids = rep ? rep.setlist : [];
-    if(!ids.length){
-      return h("div",{class:"empty"},["Aún no hay canciones en el set list. Ve a “Todas” y toca la ⭐ en cada canción que quieras tocar esa noche."]);
-    }
-    const wrap = h("div",{},[]);
-    const actionsTop = h("div",{style:"display:flex;gap:8px;margin-bottom:12px;", class:"no-print"},[
-      h("button",{class:"btn primary small", onclick:()=>{
-        const first = ids[0];
-        if(!first) return;
-        state.perf = {ids: ids.slice(), index:0};
-        state.activeId = first; state.transpose=0; state.stageMode=true; state.view="detail"; render();
-      }},["🎸 Iniciar show"]),
-      h("button",{class:"btn small", onclick: printRepertorio},["Imprimir set list"]),
-    ]);
-    wrap.appendChild(actionsTop);
-    const list = h("div",{class:"song-list"},[]);
-    ids.forEach((id,i)=>{
-      const s = state.songs.find(x=>x.id===id);
-      if(!s) return;
-      const row = h("div",{class:"setlist-row"},[
-        h("span",{class:"num"},[String(i+1)]),
-        (()=>{
-          const info = h("div",{class:"info"},[
-            h("h4",{},[s.title||"(sin título)"]),
-            h("span",{},[[s.author, s.ritmo].filter(Boolean).join(" · ")]),
-          ]);
-          info.addEventListener("click",()=>{ state.perf={ids:ids.slice(), index:i}; state.activeId=s.id; state.transpose=0; state.view="detail"; render(); });
-          return info;
-        })(),
-        h("div",{class:"ctrls no-print"},[
-          h("button",{class:"btn small", onclick:()=>moveInSetlist(id,-1)},["↑"]),
-          h("button",{class:"btn small", onclick:()=>moveInSetlist(id,1)},["↓"]),
-          h("button",{class:"btn small", onclick:()=>{toggleInSetlist(id); render();}},["✕"]),
-        ]),
-      ]);
-      list.appendChild(row);
-    });
-    wrap.appendChild(list);
-    return wrap;
-  }
-
-  function renderList(){
-    const list = filteredSongs();
-    if(list.length===0){
-      return h("div",{class:"empty"},[state.songs.length===0 ? "Aún no hay canciones. Ve a la pestaña Agregar y cuéntame qué quieres tocar." : "Sin resultados."]);
-    }
-    const container = h("div",{class:"song-list"},[]);
-    list.forEach(s=>{
-      const rep = activeRepertorio();
-      const inSetlist = rep && rep.setlist.includes(s.id);
-      const star = h("button",{class:"star-btn"+(inSetlist?" on":""), title:"Agregar/quitar del set list", onclick:(e)=>{e.stopPropagation(); toggleInSetlist(s.id); render();}},[inSetlist?"★":"☆"]);
-      const card = h("div",{class:"placard"},[
-        h("div",{class:"row-actions no-print"},[
-          star,
-          h("button",{class:"btn small", onclick:(e)=>{e.stopPropagation(); openManualForm(s);}},["Editar"]),
-          h("button",{class:"btn small", onclick:(e)=>{e.stopPropagation(); deleteSong(s.id);}},["✕"]),
-        ]),
-        h("h3",{},[s.title||"(sin título)"]),
-        h("div",{class:"sub"},[
-          s.author||"",
-          s.ritmo ? h("span",{class:"tag"},[s.ritmo]) : null,
-          s.key ? h("span",{class:"tag"},["Tono "+s.key]) : null,
-          s.capo ? h("span",{class:"tag"},["Capo "+s.capo]) : null,
-        ]),
-      ]);
-      card.addEventListener("click",()=>{ state.perf=null; state.activeId=s.id; state.transpose=0; state.view="detail"; render(); });
-      container.appendChild(card);
-    });
-    return container;
-  }
-
-  function printRepertorio(){
-    const rep = activeRepertorio();
-    if(!rep) return;
-    const sheet = document.getElementById("printSheet");
-    sheet.innerHTML = "";
-
-    const songsInOrder = rep.setlist.length
-      ? rep.setlist.map(id=>state.songs.find(s=>s.id===id)).filter(Boolean)
-      : state.songs.filter(s=>s.repertorioId===rep.id).sort((a,b)=>(a.title||"").localeCompare(b.title||"","es"));
-
-    if(songsInOrder.length===0){ showAlert("Este repertorio no tiene canciones para imprimir."); return; }
-
-    const cover = h("div",{class:"print-cover"},[
-      h("h1",{},[rep.name]),
-      h("p",{},["Cancionero · " + songsInOrder.length + (songsInOrder.length===1?" canción":" canciones")]),
-    ]);
-    sheet.appendChild(cover);
-
-    const toc = h("div",{class:"print-toc"},[h("h2",{},["Índice"])]);
-    const ol = h("ol",{},[]);
-    songsInOrder.forEach(s=> ol.appendChild(h("li",{},[(s.title||"(sin título)") + (s.author?(" — "+s.author):"")])));
-    toc.appendChild(ol);
-    sheet.appendChild(toc);
-
-    songsInOrder.forEach(s=>{
-      const pc = h("div",{class:"print-chart"},[]);
-      pc.appendChild(h("h2",{},[s.title||"(sin título)"]));
-      const bylineParts=[]; if(s.author) bylineParts.push(s.author); if(s.ritmo) bylineParts.push(s.ritmo);
-      if(s.key) bylineParts.push("Tono "+s.key); if(s.capo) bylineParts.push("Capo "+s.capo);
-      pc.appendChild(h("div",{class:"byline"},[bylineParts.join(" · ")||"\u00A0"]));
-      (s.chordproText||"").split("\n").forEach(line=>{
-        if(line.trim()===""){ pc.appendChild(h("div",{class:"print-lyricline blank"},[])); return; }
-        const {chordStr, lyricStr} = parseChordProLine(line);
-        if(chordStr.trim()!=="") pc.appendChild(h("div",{class:"print-chordline"},[chordStr]));
-        pc.appendChild(h("div",{class:"print-lyricline"},[lyricStr]));
-      });
-      sheet.appendChild(pc);
-    });
-
-    window.print();
-  }
-
-  function openManualForm(song){
-    song = song || {};
-    const overlay = h("div",{class:"overlay no-print", id:"modalOverlay"},[]);
-    const titleInput = h("input",{type:"text", value:song.title||""});
-    const authorInput = h("input",{type:"text", value:song.author||""});
-    const keyInput = h("input",{type:"text", value:song.key||""});
-    const capoInput = h("input",{type:"text", value:song.capo||""});
-    const notesInput = h("input",{type:"text", value:song.notes||""});
-    const bodyInput = h("textarea",{rows:9, placeholder:"[Am]así queda una línea con acordes"});
-    bodyInput.value = song.chordproText||"";
-    const repSelect = h("select",{},[]);
-    state.repertorios.forEach(r=>{
-      const opt = h("option",{value:r.id},[r.name]);
-      if((song.repertorioId||state.activeRepertorioId) === r.id) opt.setAttribute("selected","selected");
-      repSelect.appendChild(opt);
-    });
-    const ritmoSelect = h("select",{},[]);
-    ritmoSelect.appendChild(h("option",{value:""},["—"]));
-    RITMOS.forEach(r=>{
-      const opt = h("option",{value:r},[r]);
-      if(song.ritmo === r) opt.setAttribute("selected","selected");
-      ritmoSelect.appendChild(opt);
-    });
-    const modal = h("div",{class:"modal"},[
-      h("h2",{},[song.id ? "Editar canción" : "Agregar manualmente"]),
-      h("div",{class:"field"},[h("label",{},["Título"]), titleInput]),
-      h("div",{class:"row3"},[
-        h("div",{class:"field"},[h("label",{},["Repertorio"]), repSelect]),
-        h("div",{class:"field"},[h("label",{},["Ritmo"]), ritmoSelect]),
-        h("div",{class:"field"},[h("label",{},["Tono"]), keyInput]),
-      ]),
-      h("div",{class:"row3"},[
-        h("div",{class:"field"},[h("label",{},["Autor"]), authorInput]),
-        h("div",{class:"field"},[h("label",{},["Capo"]), capoInput]),
-        h("div",{class:"field"},[]),
-      ]),
-      h("div",{class:"field"},[h("label",{},["Notas"]), notesInput]),
-      h("div",{class:"field"},[h("label",{},["Letra y acordes"]), bodyInput]),
-      h("div",{class:"modal-actions"},[
-        h("button",{class:"btn", onclick:()=>{overlay.remove();}},["Cancelar"]),
-        h("button",{class:"btn primary", onclick: async ()=>{
-          if(!titleInput.value.trim()){ titleInput.style.borderColor="var(--clay)"; return; }
-          const data = {
-            id: song.id || ("s"+Date.now()+Math.random().toString(36).slice(2,7)),
-            title: titleInput.value.trim(), author: authorInput.value.trim(),
-            repertorioId: repSelect.value || state.activeRepertorioId,
-            ritmo: ritmoSelect.value || "",
-            key: keyInput.value.trim(), capo: capoInput.value.trim(), notes: notesInput.value.trim(),
-            chordproText: bodyInput.value, updatedAt: Date.now(),
-          };
-          const idx = state.songs.findIndex(s=>s.id===data.id);
-          if(idx>=0) state.songs[idx]=data; else state.songs.push(data);
-          overlay.remove();
-          state.view="list"; render();
-          await saveSongs();
-        }},["Guardar"]),
-      ]),
-    ]);
-    overlay.appendChild(modal);
-    overlay.addEventListener("click",(e)=>{ if(e.target===overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-  }
-
-  async function deleteSong(id){
-    showConfirm("¿Eliminar esta canción?", async ()=>{
-      state.songs = state.songs.filter(s=>s.id!==id);
-      let repChanged = false;
-      state.repertorios.forEach(r=>{
-        const idx = r.setlist.indexOf(id);
-        if(idx>=0){ r.setlist.splice(idx,1); repChanged = true; }
-      });
-      render();
-      await saveSongs();
-      if(repChanged) await saveRepertorios();
-    });
-  }
-
-  let autoScrollTimer = null;
-  function stopAutoScroll(){
-    if(autoScrollTimer){ clearInterval(autoScrollTimer); autoScrollTimer = null; }
-  }
-  function startAutoScroll(){
-    stopAutoScroll();
-    autoScrollTimer = setInterval(()=>{
-      window.scrollBy(0, state.scrollSpeed/10);
-      if((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 4){ stopAutoScroll(); state.autoScroll=false; render(); }
-    }, 100);
-  }
-
-  function goToPerfIndex(newIndex){
-    if(!state.perf) return;
-    if(newIndex < 0 || newIndex >= state.perf.ids.length) return;
-    state.perf.index = newIndex;
-    state.activeId = state.perf.ids[newIndex];
-    state.transpose = 0;
-    render();
-  }
-
-  function renderDetail(){
-    const song = state.songs.find(s=>s.id===state.activeId);
-    if(!song){ state.view="list"; return renderRepertorio(); }
-
-    const wrap = h("div",{},[]);
-    const barTop = h("div",{class:"detail-bar no-print"},[
-      h("button",{class:"btn small", onclick:()=>{stopAutoScroll(); state.autoScroll=false; state.view="list"; state.stageMode=false; state.perf=null; render();}},["← Volver"]),
-      h("div",{class:"transpose"},[
-        h("button",{onclick:()=>{state.transpose--; render();}},["–"]),
-        h("span",{class:"val"},[(state.transpose>0?"+":"")+state.transpose]),
-        h("button",{onclick:()=>{state.transpose++; render();}},["+"]),
-        h("button",{class:"btn small", style:"border-radius:14px;margin-left:4px;", onclick:()=>{state.preferFlat=!state.preferFlat; render();}},[state.preferFlat?"♭":"♯"]),
-      ]),
-      h("button",{class:"btn small", onclick:()=>{stopAutoScroll(); state.autoScroll=false; state.stageMode=!state.stageMode; render();}},[state.stageMode?"Salir de escenario":"🎸 Escenario"]),
-    ]);
-    wrap.appendChild(barTop);
-
-    // key jump + save
-    if(state.transpose !== 0){
-      const currentKey = song.key ? transposeChordToken(song.key, state.transpose, state.preferFlat) : null;
-      const saveRow = h("div",{class:"key-jump no-print", style:"margin:-8px 0 14px;"},[
-        h("span",{class:"lbl"},[currentKey ? ("Sonando en " + currentKey + " ahora — ") : "Transposición activa — "]),
-        h("button",{class:"btn small", onclick: async ()=>{
-          song.chordproText = transposeChordProText(song.chordproText||"", state.transpose, state.preferFlat);
-          if(song.key) song.key = transposeChordToken(song.key, state.transpose, state.preferFlat);
-          state.transpose = 0;
-          render();
-          await saveSongs();
-        }},["Guardar este tono"]),
-      ]);
-      wrap.appendChild(saveRow);
-    }
-
-    if(state.perf){
-      const nav = h("div",{class:"perf-nav no-print", style:"margin-bottom:14px;"},[
-        h("button",{class:"btn small", disabled: state.perf.index<=0, onclick:()=>goToPerfIndex(state.perf.index-1)},["⬅ Anterior"]),
-        h("span",{class:"lbl", style:"align-self:center;color:var(--chalk-dim);font-size:12.5px;"},[(state.perf.index+1)+" / "+state.perf.ids.length+" del set list"]),
-        h("button",{class:"btn small", disabled: state.perf.index>=state.perf.ids.length-1, onclick:()=>goToPerfIndex(state.perf.index+1)},["Siguiente ➡"]),
-      ]);
-      wrap.appendChild(nav);
-    }
-
-    if(state.stageMode){
-      const asBar = h("div",{class:"autoscroll-bar no-print"},[
-        h("button",{class:"btn small", onclick:()=>{
-          state.autoScroll = !state.autoScroll;
-          if(state.autoScroll) startAutoScroll(); else stopAutoScroll();
-          render();
-        }},[state.autoScroll ? "⏸ Pausar scroll" : "▶ Auto-scroll"]),
-        h("span",{class:"lbl"},["Velocidad"]),
-        h("input",{type:"range", min:"5", max:"100", value:String(state.scrollSpeed), oninput:(e)=>{ state.scrollSpeed = Number(e.target.value); if(state.autoScroll) startAutoScroll(); }}),
-      ]);
-      wrap.appendChild(asBar);
-    }
-
-    const chart = h("div",{class:"chart"},[]);
-    chart.appendChild(h("h2",{},[song.title||"(sin título)"]));
-    const bylineParts=[]; if(song.author) bylineParts.push(song.author); if(song.ritmo) bylineParts.push(song.ritmo); if(song.notes) bylineParts.push(song.notes);
-    chart.appendChild(h("div",{class:"byline"},[bylineParts.join(" · ")||"\u00A0"]));
-
-    const tagRow = h("div",{style:"margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"},[]);
-    if(song.key) tagRow.appendChild(h("span",{class:"tag"},["Tono "+transposeChordToken(song.key,state.transpose,state.preferFlat)]));
-    if(song.capo) tagRow.appendChild(h("span",{class:"tag"},["Capo "+song.capo]));
-    if(song.key){
-      const jump = h("select",{class:"no-print"},[]);
-      jump.appendChild(h("option",{value:""},["Saltar a tono…"]));
-      NOTES_SHARP.forEach(n=>jump.appendChild(h("option",{value:n},[n])));
-      jump.addEventListener("change",(e)=>{
-        if(!e.target.value) return;
-        const fromIdx = NOTES_SHARP.indexOf(transposeChordToken(song.key,0,false));
-        const toIdx = NOTES_SHARP.indexOf(e.target.value);
-        if(fromIdx>=0 && toIdx>=0){ state.transpose = ((toIdx-fromIdx)%12+12)%12; render(); }
-      });
-      tagRow.appendChild(jump);
-    }
-    chart.appendChild(tagRow);
-
-    const text = transposeChordProText(song.chordproText||"", state.transpose, state.preferFlat);
-    text.split("\n").forEach(line=>{
-      if(line.trim()===""){ chart.appendChild(h("div",{class:"lyricline blank"},[])); return; }
-      const {chordStr, lyricStr} = parseChordProLine(line);
-      if(chordStr.trim()!=="") chart.appendChild(h("div",{class:"chordline"},[chordStr]));
-      chart.appendChild(h("div",{class:"lyricline"},[lyricStr]));
-    });
-    wrap.appendChild(chart);
-    return wrap;
-  }
-
-  loadSongs();
-})();
+renderHome();
+firebaseBootstrap();
 </script>
 </body>
 </html>
