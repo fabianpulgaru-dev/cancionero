@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.9.1 Reparado</title>
+<title>Mi Cancionero V9.0 Manual</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -234,6 +234,23 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
   .rep-song-actions button{font-size:11px!important;padding:7px 9px!important}
 }
 
+
+.manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.manual-grid .full{grid-column:1/-1}
+.manual-grid label{display:grid;gap:6px;font-size:13px;font-weight:800}
+.manual-grid input,.manual-grid textarea{
+  width:100%;border:1px solid var(--line);border-radius:12px;background:white;
+  padding:11px 12px;font:inherit
+}
+.manual-grid textarea{resize:vertical;line-height:1.4}
+@media(max-width:700px){
+  .manual-grid{grid-template-columns:1fr}
+  .manual-grid .full{grid-column:auto}
+  .cloud-card{padding:16px;border-radius:18px}
+  .cloud-card h3{font-size:21px}
+  .manual-grid input,.manual-grid textarea{font-size:16px}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -250,7 +267,7 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
     <button class="nav-btn" data-view="repertoires">☷ Repertorios</button>
     <button class="nav-btn" data-view="search">⌕ Buscar canción</button>
   </nav>
-  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.9.1 · reparado</div>
+  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V9.0 · carga manual</div>
   <div class="aside-foot">Busca automáticamente y pega una cifra completa solo cuando la necesites. Sin configuraciones extra.</div>
 </aside>
 
@@ -351,6 +368,48 @@ Texto de la canción…"></textarea>
   </div>
 </section>
 </main>
+</div>
+
+
+<div id="manualAddPanel" class="cloud-panel" onclick="if(event.target===this)closeManualAdd()">
+  <div class="cloud-card">
+    <div class="eyebrow">Nueva canción</div>
+    <h3>Agregar manualmente</h3>
+    <p>Completa solo lo que necesites. Título y artista son obligatorios.</p>
+
+    <div class="manual-grid">
+      <label>Título
+        <input id="manualTitle" placeholder="Ej.: Mira niñita">
+      </label>
+      <label>Artista
+        <input id="manualArtist" placeholder="Ej.: Los Jaivas">
+      </label>
+      <label>Álbum
+        <input id="manualAlbum" placeholder="Opcional">
+      </label>
+      <label>Año
+        <input id="manualYear" inputmode="numeric" placeholder="1972">
+      </label>
+      <label>Tono
+        <input id="manualKey" placeholder="Ej.: DO, C, MIm">
+      </label>
+      <label>URL de portada
+        <input id="manualCover" placeholder="Opcional">
+      </label>
+      <label class="full">Letra
+        <textarea id="manualLyrics" placeholder="Pega aquí la letra..." rows="8"></textarea>
+      </label>
+      <label class="full">Letra + acordes
+        <textarea id="manualChart" placeholder="Pega aquí la cifra completa..." rows="10"></textarea>
+      </label>
+    </div>
+
+    <div class="cloud-actions">
+      <button class="primary" onclick="saveManualSong()">Guardar canción</button>
+      <button class="ghost" onclick="closeManualAdd()">Cancelar</button>
+    </div>
+    <div id="manualStatus" class="cloud-status" style="display:none"></div>
+  </div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -878,6 +937,69 @@ function renderPlayer(){
 function fontSize(n){currentFont=Math.max(14,Math.min(36,currentFont+n));const e=document.getElementById("sheetBox");if(e)e.style.fontSize=currentFont+"px"}
 function toggleScroll(){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=null;toast("Auto-scroll detenido")}else{scrollTimer=setInterval(()=>window.scrollBy(0,1),35);toast("Auto-scroll activado")}}
 function toggleStage(){document.body.classList.toggle("stage-mode")}
+
+
+function openManualAdd(){
+  const p=document.getElementById("manualAddPanel");
+  if(!p)return;
+  ["manualTitle","manualArtist","manualAlbum","manualYear","manualKey","manualCover","manualLyrics","manualChart"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
+  });
+  const st=document.getElementById("manualStatus");
+  if(st){st.style.display="none";st.textContent=""}
+  p.classList.add("open");
+}
+function closeManualAdd(){
+  document.getElementById("manualAddPanel")?.classList.remove("open");
+}
+function saveManualSong(){
+  const title=document.getElementById("manualTitle").value.trim();
+  const artist=document.getElementById("manualArtist").value.trim();
+  const album=document.getElementById("manualAlbum").value.trim();
+  const year=document.getElementById("manualYear").value.trim();
+  const keyRaw=document.getElementById("manualKey").value.trim();
+  const cover=document.getElementById("manualCover").value.trim();
+  const lyrics=document.getElementById("manualLyrics").value.trim();
+  const chartText=document.getElementById("manualChart").value.trim();
+  const st=document.getElementById("manualStatus");
+
+  if(!title||!artist){
+    st.style.display="block";st.className="cloud-status bad";
+    st.textContent="Título y artista son obligatorios.";
+    return;
+  }
+
+  let chart=null;
+  let detectedKey="";
+  if(chartText){
+    chart=parseChart(chartText);
+    detectedKey=detectKey(chart)||"";
+  }
+
+  const song={
+    id:uid(),
+    title,
+    artist,
+    album,
+    year,
+    cover:cover||placeholderCover,
+    lyrics:lyrics || (chartText ? chartText.split("\n").filter(line=>!isChordLine(line)&&!isSectionLine(line)).join("\n").trim() : ""),
+    chart,
+    key:keyRaw ? normalizeChordToken(keyRaw) : detectedKey,
+    shift:0,
+    createdAt:new Date().toISOString(),
+    source:"manual"
+  };
+
+  songs.unshift(song);
+  persist();
+  renderHome();
+  renderLibrary();
+  renderReps();
+  closeManualAdd();
+  toast("Canción agregada");
+  openSong(song.id);
+}
 
 renderHome();
 initSongbookFirebase();
