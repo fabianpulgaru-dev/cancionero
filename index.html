@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.4 EE12026</title>
+<title>Mi Cancionero V8.5 Cifrado Latino</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -389,15 +389,47 @@ async function fetchLyrics(s){
  }catch(e){}
 }
 
-function looksLikeChord(tok){return /^(?:[A-G](?:#|b)?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-G](?:#|b)?)?|N\.?C\.?)$/.test(tok)}
+function normalizeChordToken(tok){
+  let t=String(tok||"").trim();
+
+  // Notación latina/española -> anglosajona
+  const roots=[
+    ["DO","C"],["RE","D"],["MI","E"],["FA","F"],["SOL","G"],["LA","A"],["SI","B"]
+  ];
+
+  // Primero raíz principal
+  for(const [lat,eng] of roots){
+    const re=new RegExp("^"+lat+"(?=[#b♯♭]|m|M|maj|min|dim|aug|sus|add|\\d|\\/|$)","i");
+    if(re.test(t)){ t=t.replace(re,eng); break; }
+  }
+
+  // Luego bajo de acorde invertido: /SOL, /RE#, etc.
+  for(const [lat,eng] of roots){
+    const re=new RegExp("\\/"+lat+"(?=[#b♯♭]|$)","i");
+    t=t.replace(re,"/"+eng);
+  }
+
+  t=t.replace(/♯/g,"#").replace(/♭/g,"b");
+
+  // Normalizar sufijos habituales en castellano
+  t=t.replace(/menor/ig,"m")
+     .replace(/mayor/ig,"maj")
+     .replace(/^([A-G](?:#|b)?)M(?=\d|$)/, "$1maj");
+
+  return t;
+}
+function looksLikeChord(tok){
+  const t=normalizeChordToken(tok);
+  return /^(?:[A-G](?:#|b)?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-G](?:#|b)?)?|N\.?C\.?)$/.test(t);
+}
 function isChordLine(line){const t=line.trim().split(/\s+/).filter(Boolean);if(!t.length)return false;const m=t.filter(looksLikeChord).length;return m>=1&&m/t.length>=.65}
 function isSectionLine(line){const c=line.trim().replace(/[\[\]:]/g,"").trim();return /^(intro|verse|verso|chorus|coro|bridge|puente|pre.?chorus|pre.?coro|outro|solo|interlude|estrofa|refrain|estribillo|instrumental)(\s*\d+)?$/i.test(c)}
 function parseChart(txt){return String(txt||"").replace(/\r/g,"").split("\n").map(line=>isSectionLine(line)?{type:"section",text:line.trim()}:isChordLine(line)?{type:"chords",text:line.replace(/\t/g,"    ")}:{type:"lyrics",text:line})}
-function detectKey(chart){const counts={};chart.filter(x=>x.type==="chords").forEach(x=>x.text.trim().split(/\s+/).forEach(tok=>{if(looksLikeChord(tok)){const r=(tok.match(/^[A-G](?:#|b)?/)||[])[0];if(r)counts[r]=(counts[r]||0)+1}}));return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0]||""}
+function detectKey(chart){const counts={};chart.filter(x=>x.type==="chords").forEach(x=>x.text.trim().split(/\s+/).forEach(tok=>{if(looksLikeChord(tok)){const nt=normalizeChordToken(tok);const r=(nt.match(/^[A-G](?:#|b)?/)||[])[0];if(r)counts[r]=(counts[r]||0)+1}}));return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0]||""}
 const notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"],flats={"Db":"C#","Eb":"D#","Gb":"F#","Ab":"G#","Bb":"A#"};
 function transposeChord(chord,shift){return chord.replace(/^([A-G](?:#|b)?)/,(_,root)=>{const i=notes.indexOf(flats[root]||root);return i<0?root:notes[(i+shift+120)%12]}).replace(/\/([A-G](?:#|b)?)/g,(_,root)=>{const i=notes.indexOf(flats[root]||root);return i<0?"/"+root:"/"+notes[(i+shift+120)%12]})}
 function transposeChart(delta){if(!currentSong?.chart)return;currentSong.shift=(currentSong.shift||0)+delta;persist();renderPlayer()}
-function renderChart(chart,shift=0){return chart.map(r=>r.type==="section"?`<div class="section-line">${esc(r.text)}</div>`:r.type==="chords"?`<div class="chord-line">${esc(r.text.replace(/\S+/g,t=>looksLikeChord(t)?transposeChord(t,shift):t))}</div>`:`<div>${esc(r.text)}</div>`).join("")}
+function renderChart(chart,shift=0){return chart.map(r=>r.type==="section"?`<div class="section-line">${esc(r.text)}</div>`:r.type==="chords"?`<div class="chord-line">${esc(r.text.replace(/\S+/g,t=>looksLikeChord(t)?transposeChord(normalizeChordToken(t),shift):t))}</div>`:`<div>${esc(r.text)}</div>`).join("")}
 async function pasteFromClipboard(){try{document.getElementById("pasteText").value=await navigator.clipboard.readText()}catch(e){toast("El navegador no permitió leer el portapapeles")}}
 function savePastedChart(){const txt=document.getElementById("pasteText").value;if(!txt.trim()){toast("Pega una cifra primero");return}const parsed=parseChart(txt);if(!parsed.some(x=>x.type==="chords")){toast("No detecté líneas de acordes");return}currentSong.chart=parsed;currentSong.shift=0;currentSong.key=detectKey(parsed);persist();mode="chart";document.getElementById("pasteText").value="";renderPlayer();toast("Cifra guardada")}
 function clearChart(){if(!currentSong?.chart)return;if(!confirm("¿Eliminar la cifra guardada?"))return;currentSong.chart=null;currentSong.shift=0;currentSong.key="";persist();mode=currentSong.lyrics?"lyrics":"chart";renderPlayer()}
