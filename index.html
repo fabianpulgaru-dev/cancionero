@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.1 Firebase Compartido</title>
+<title>Mi Cancionero V8.2 Firebase Compartido</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -82,29 +82,16 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
 .backup-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 
 
-.cloud-btn{width:100%;margin-top:16px}
-.cloud-panel{position:fixed;inset:0;background:rgba(20,28,30,.38);display:none;align-items:center;justify-content:center;padding:20px;z-index:200}
-.cloud-panel.open{display:flex}
-.cloud-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow)}
-.cloud-card h3{font-size:23px;margin-bottom:6px}
-.cloud-card p{color:var(--muted);line-height:1.45}
-.cloud-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.cloud-grid .full{grid-column:1/-1}
-.cloud-grid label{display:grid;gap:6px;font-size:13px;font-weight:800}
-.cloud-grid input{width:100%;border:1px solid var(--line);border-radius:12px;background:white;padding:11px 12px}
-.cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.cloud-status{margin-top:12px;padding:11px 12px;border-radius:12px;background:var(--soft-blue);color:#345b60;font-size:12px;line-height:1.45}
-.cloud-status.ok{background:var(--soft-green);color:#53643d}
-.cloud-status.bad{background:var(--soft-terra);color:#813e2c}
-.sync-pill{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;font-weight:850;color:var(--muted)}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:#aaa}.sync-dot.ok{background:var(--olive)}.sync-dot.busy{background:var(--mustard)}.sync-dot.bad{background:var(--terra)}
-@media(max-width:650px){.cloud-grid{grid-template-columns:1fr}.cloud-grid .full{grid-column:auto}}
+.cloud-state{margin-top:16px;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:850;color:var(--muted)}
+.cloud-dot{width:8px;height:8px;border-radius:50%;background:#aaa}
+.cloud-dot.ok{background:var(--olive)}
+.cloud-dot.busy{background:var(--mustard)}
+.cloud-dot.bad{background:var(--terra)}
 
 </style>
 
-<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 
 </head>
 <body>
@@ -117,8 +104,7 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
     <button class="nav-btn" data-view="repertoires">☷ Repertorios</button>
     <button class="nav-btn" data-view="search">⌕ Buscar canción</button>
   </nav>
-  <button class="ghost cloud-btn" onclick="openCloudPanel()">☁ Firebase</button>
-  <div id="sidebarSync" class="sync-pill"><span class="sync-dot"></span><span>Solo en este dispositivo</span></div>
+  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div>
   <div class="aside-foot">Busca automáticamente y pega una cifra completa solo cuando la necesites. Sin configuraciones extra.</div>
 </aside>
 
@@ -208,56 +194,6 @@ Texto de la canción…"></textarea>
 </main>
 </div>
 
-
-<div id="cloudPanel" class="cloud-panel" onclick="if(event.target===this)closeCloudPanel()">
-  <div class="cloud-card">
-    <div class="eyebrow">Firebase compartido</div>
-    <h3>Una biblioteca para todos</h3>
-    <p>No hay cuentas ni contraseñas. La app se autentica anónimamente en segundo plano y todos los dispositivos conectados ven la misma biblioteca.</p>
-
-    <div class="cloud-grid">
-      <label class="full">API key
-        <input id="fbApiKey" placeholder="AIza...">
-      </label>
-      <label>Auth domain
-        <input id="fbAuthDomain" placeholder="tu-proyecto.firebaseapp.com">
-      </label>
-      <label>Project ID
-        <input id="fbProjectId" placeholder="tu-proyecto">
-      </label>
-      <label>Storage bucket
-        <input id="fbStorageBucket" placeholder="tu-proyecto.firebasestorage.app">
-      </label>
-      <label>Messaging sender ID
-        <input id="fbMessagingSenderId" placeholder="123456789">
-      </label>
-      <label class="full">App ID
-        <input id="fbAppId" placeholder="1:123456789:web:...">
-      </label>
-    </div>
-
-    <div class="cloud-actions">
-      <button class="primary" onclick="saveFirebaseConfig()">Guardar configuración</button>
-      <button class="ghost" onclick="testFirebase()">Probar conexión</button>
-    </div>
-
-    <div class="cloud-actions">
-      <button class="secondary" onclick="uploadLibraryToFirebase()">Subir biblioteca actual</button>
-      <button class="ghost" onclick="downloadLibraryFromFirebase()">Traer biblioteca</button>
-    </div>
-
-    <div id="cloudStatus" class="cloud-status">Firebase aún no está configurado.</div>
-
-    <div class="note" style="margin-top:14px">
-      <strong>En Firebase Console:</strong> habilita <strong>Anonymous</strong> en Authentication y crea una base de <strong>Cloud Firestore</strong>. Después pega las reglas del archivo que acompaña esta versión.
-    </div>
-
-    <div class="cloud-actions">
-      <button class="ghost" onclick="closeCloudPanel()">Cerrar</button>
-    </div>
-  </div>
-</div>
-
 <div id="toast" class="toast"></div>
 
 <script>
@@ -266,209 +202,140 @@ let songs=JSON.parse(localStorage.getItem("mc7_songs")||"[]");
 let reps=JSON.parse(localStorage.getItem("mc7_reps")||"[]");
 let currentSong=null,currentFont=19,scrollTimer=null,mode="lyrics";
 
-let firebaseAppRef=null;
-let firebaseAuthRef=null;
-let firebaseDbRef=null;
-let firebaseUser=null;
-let firebaseSaveTimer=null;
-let firebaseUnsubscribe=null;
-let firebaseApplyingRemote=false;
+// ===============================
+// FIREBASE — proyecto existente
+// ===============================
+const firebaseConfig = {
+  apiKey: "AIzaSyDPkx9sbI7FQEEp1ime-C7sICosbblYqAE",
+  authDomain: "investigaciones-d4262.firebaseapp.com",
+  databaseURL: "https://investigaciones-d4262-default-rtdb.firebaseio.com",
+  projectId: "investigaciones-d4262",
+  storageBucket: "investigaciones-d4262.firebasestorage.app",
+  messagingSenderId: "155295863127",
+  appId: "1:155295863127:web:3cb65a4247ef17e30b2e12"
+};
 
-function getFirebaseConfig(){
-  try{return JSON.parse(localStorage.getItem("mc8_shared_firebase_config")||"null")||{}}catch(e){return {}}
+let firebaseDb=null;
+let songbookRef=null;
+let firebaseReady=false;
+let applyingRemote=false;
+let remoteSaveTimer=null;
+let lastRemoteUpdatedAt=0;
+
+function setCloudState(text,type="busy"){
+  const el=document.getElementById("cloudState");
+  if(!el)return;
+  el.innerHTML=`<span class="cloud-dot ${type}"></span><span>${esc(text)}</span>`;
 }
-function setCloudStatus(text,type=""){
-  const el=document.getElementById("cloudStatus");
-  if(el){el.textContent=text;el.className="cloud-status "+type}
-}
-function setSidebarSync(text,type=""){
-  const el=document.getElementById("sidebarSync");
-  if(el)el.innerHTML=`<span class="sync-dot ${type}"></span><span>${esc(text)}</span>`;
-}
-function initFirebase(){
-  const cfg=getFirebaseConfig();
-  if(!cfg.apiKey||!cfg.projectId||!window.firebase)return false;
+
+function initSongbookFirebase(){
   try{
-    firebaseAppRef=(firebase.apps&&firebase.apps.length)?firebase.app():firebase.initializeApp(cfg);
-    firebaseAuthRef=firebase.auth();
-    firebaseDbRef=firebase.firestore();
-    return true;
-  }catch(e){
-    console.error(e);
-    setCloudStatus("No pude iniciar Firebase: "+e.message,"bad");
-    setSidebarSync("Error Firebase","bad");
-    return false;
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    firebaseDb=firebase.database();
+
+    // Ruta aislada: no toca Atelier ni otras apps.
+    songbookRef=firebaseDb.ref("sharedSongbook/main");
+
+    setCloudState("Sincronizando…","busy");
+
+    // Primera carga: si existe nube, manda la nube.
+    // Si está vacía, sube automáticamente la biblioteca local.
+    songbookRef.once("value").then(snap=>{
+      if(snap.exists()){
+        applyRemoteLibrary(snap.val());
+      }else{
+        firebaseReady=true;
+        saveLibraryToFirebase(true);
+      }
+
+      firebaseReady=true;
+      setCloudState("Nube conectada","ok");
+
+      // Cambios en tiempo real desde cualquiera de los dispositivos.
+      songbookRef.on("value",remoteSnap=>{
+        if(!remoteSnap.exists() || applyingRemote)return;
+        const data=remoteSnap.val();
+        const remoteStamp=Number(data?.updatedAt||0);
+
+        // Ignorar ecos de la misma escritura.
+        if(remoteStamp && remoteStamp===lastRemoteUpdatedAt)return;
+
+        applyRemoteLibrary(data);
+      },err=>{
+        console.warn("Firebase listener",err);
+        setCloudState("Error de sincronización","bad");
+      });
+    }).catch(err=>{
+      console.warn("Firebase initial read",err);
+      setCloudState("Firebase bloqueado por reglas","bad");
+    });
+
+  }catch(err){
+    console.warn("Firebase no iniciado",err);
+    setCloudState("Sin conexión a Firebase","bad");
   }
 }
-function openCloudPanel(){
-  document.getElementById("cloudPanel").classList.add("open");
-  const c=getFirebaseConfig();
-  document.getElementById("fbApiKey").value=c.apiKey||"";
-  document.getElementById("fbAuthDomain").value=c.authDomain||"";
-  document.getElementById("fbProjectId").value=c.projectId||"";
-  document.getElementById("fbStorageBucket").value=c.storageBucket||"";
-  document.getElementById("fbMessagingSenderId").value=c.messagingSenderId||"";
-  document.getElementById("fbAppId").value=c.appId||"";
-  refreshFirebaseState();
-}
-function closeCloudPanel(){document.getElementById("cloudPanel").classList.remove("open")}
-function saveFirebaseConfig(){
-  const cfg={
-    apiKey:document.getElementById("fbApiKey").value.trim(),
-    authDomain:document.getElementById("fbAuthDomain").value.trim(),
-    projectId:document.getElementById("fbProjectId").value.trim(),
-    storageBucket:document.getElementById("fbStorageBucket").value.trim(),
-    messagingSenderId:document.getElementById("fbMessagingSenderId").value.trim(),
-    appId:document.getElementById("fbAppId").value.trim()
-  };
-  if(!cfg.apiKey||!cfg.authDomain||!cfg.projectId||!cfg.appId){
-    setCloudStatus("Faltan datos obligatorios del firebaseConfig.","bad");
-    return;
-  }
-  localStorage.setItem("mc8_shared_firebase_config",JSON.stringify(cfg));
-  setCloudStatus("Configuración guardada. Recargando…","ok");
-  setTimeout(()=>location.reload(),700);
-}
-async function ensureAnonymousAuth(){
-  if(!firebaseAuthRef&&!initFirebase())return false;
-  if(firebaseAuthRef.currentUser){
-    firebaseUser=firebaseAuthRef.currentUser;
-    return true;
-  }
-  try{
-    const cred=await firebaseAuthRef.signInAnonymously();
-    firebaseUser=cred.user;
-    return true;
-  }catch(e){
-    setCloudStatus("No pude iniciar sesión anónima: "+e.message,"bad");
-    setSidebarSync("Error de acceso","bad");
-    return false;
-  }
-}
-function sharedLibraryRef(){
-  if(!firebaseDbRef)return null;
-  return firebaseDbRef.collection("shared").doc("library");
-}
-async function testFirebase(){
-  if(!await ensureAnonymousAuth())return;
-  try{
-    const ref=sharedLibraryRef();
-    await ref.get();
-    setCloudStatus("Firebase respondió correctamente. La biblioteca compartida está accesible.","ok");
-  }catch(e){
-    setCloudStatus("Firebase respondió con un problema: "+e.message,"bad");
-  }
-}
-async function uploadLibraryToFirebase(silent=false){
-  if(!await ensureAnonymousAuth()){
-    if(!silent)setCloudStatus("No pude autenticar el dispositivo.","bad");
-    return;
-  }
-  const ref=sharedLibraryRef();
-  try{
-    setSidebarSync("Guardando…","busy");
-    await ref.set({
-      songs:songs,
-      reps:reps,
-      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
-    setSidebarSync("Firebase conectado","ok");
-    if(!silent)setCloudStatus("Biblioteca compartida actualizada.","ok");
-  }catch(e){
-    setSidebarSync("Error al guardar","bad");
-    if(!silent)setCloudStatus("No pude guardar: "+e.message,"bad");
-  }
-}
-async function downloadLibraryFromFirebase(silent=false){
-  if(!await ensureAnonymousAuth()){
-    if(!silent)setCloudStatus("No pude autenticar el dispositivo.","bad");
-    return;
-  }
-  const ref=sharedLibraryRef();
-  try{
-    setSidebarSync("Descargando…","busy");
-    const snap=await ref.get();
-    if(!snap.exists){
-      setSidebarSync("Firebase conectado","ok");
-      if(!silent)setCloudStatus("Todavía no hay biblioteca en Firebase. Puedes subir la actual.");
-      return;
+
+function applyRemoteLibrary(data){
+  if(!data)return;
+  applyingRemote=true;
+
+  songs=Array.isArray(data.songs) ? data.songs : [];
+  reps=Array.isArray(data.reps) ? data.reps : [];
+
+  localStorage.setItem("mc7_songs",JSON.stringify(songs));
+  localStorage.setItem("mc7_reps",JSON.stringify(reps));
+
+  applyingRemote=false;
+
+  renderHome();
+  if(document.getElementById("library")?.classList.contains("active"))renderLibrary();
+  if(document.getElementById("repertoires")?.classList.contains("active"))renderReps();
+
+  // Si la canción abierta fue actualizada desde otro equipo, refrescarla.
+  if(currentSong){
+    const fresh=songs.find(s=>s.id===currentSong.id);
+    if(fresh){
+      currentSong=fresh;
+      if(document.getElementById("player")?.classList.contains("active"))renderPlayer();
     }
-    const data=snap.data()||{};
-    firebaseApplyingRemote=true;
-    songs=Array.isArray(data.songs)?data.songs:[];
-    reps=Array.isArray(data.reps)?data.reps:[];
-    localStorage.setItem("mc7_songs",JSON.stringify(songs));
-    localStorage.setItem("mc7_reps",JSON.stringify(reps));
-    firebaseApplyingRemote=false;
-    renderHome();renderLibrary();renderReps();
-    setSidebarSync("Firebase conectado","ok");
-    if(!silent)setCloudStatus("Biblioteca descargada.","ok");
-  }catch(e){
-    firebaseApplyingRemote=false;
-    setSidebarSync("Error al descargar","bad");
-    if(!silent)setCloudStatus("No pude descargar: "+e.message,"bad");
   }
+
+  setCloudState("Nube conectada","ok");
 }
-async function subscribeSharedLibrary(){
-  if(!await ensureAnonymousAuth())return;
-  if(firebaseUnsubscribe)firebaseUnsubscribe();
-  const ref=sharedLibraryRef();
-  setSidebarSync("Sincronizando…","busy");
-  firebaseUnsubscribe=ref.onSnapshot(snap=>{
-    if(!snap.exists){
-      setSidebarSync("Firebase conectado","ok");
-      return;
-    }
-    const data=snap.data()||{};
-    firebaseApplyingRemote=true;
-    songs=Array.isArray(data.songs)?data.songs:[];
-    reps=Array.isArray(data.reps)?data.reps:[];
-    localStorage.setItem("mc7_songs",JSON.stringify(songs));
-    localStorage.setItem("mc7_reps",JSON.stringify(reps));
-    firebaseApplyingRemote=false;
-    renderHome();
-    if(document.getElementById("library").classList.contains("active"))renderLibrary();
-    if(document.getElementById("repertoires").classList.contains("active"))renderReps();
-    setSidebarSync("Firebase conectado","ok");
-    setCloudStatus("Sincronización en tiempo real activa.","ok");
-  },err=>{
-    console.error(err);
-    setSidebarSync("Error de sincronización","bad");
-    setCloudStatus("Error en sincronización: "+err.message,"bad");
+
+function queueFirebaseSave(){
+  if(applyingRemote || !firebaseReady || !songbookRef)return;
+  clearTimeout(remoteSaveTimer);
+  remoteSaveTimer=setTimeout(()=>saveLibraryToFirebase(true),650);
+}
+
+function saveLibraryToFirebase(silent=false){
+  if(!songbookRef)return;
+  const stamp=Date.now();
+  lastRemoteUpdatedAt=stamp;
+
+  setCloudState("Guardando…","busy");
+
+  return songbookRef.set({
+    songs,
+    reps,
+    updatedAt:stamp
+  }).then(()=>{
+    setCloudState("Nube conectada","ok");
+    if(!silent)toast("Biblioteca guardada en Firebase");
+  }).catch(err=>{
+    console.warn("Firebase save",err);
+    setCloudState("No se pudo guardar","bad");
+    if(!silent)toast("No se pudo guardar en Firebase");
   });
-}
-function scheduleFirebaseSave(){
-  if(firebaseApplyingRemote||!firebaseUser||!firebaseDbRef)return;
-  clearTimeout(firebaseSaveTimer);
-  firebaseSaveTimer=setTimeout(()=>uploadLibraryToFirebase(true),800);
-}
-async function refreshFirebaseState(){
-  if(!firebaseAuthRef&&!initFirebase()){
-    setSidebarSync("Solo en este dispositivo","");
-    setCloudStatus("Firebase aún no está configurado.");
-    return;
-  }
-  if(await ensureAnonymousAuth()){
-    setSidebarSync("Firebase conectado","ok");
-    setCloudStatus("Conectado de forma anónima. No necesitas cuenta.","ok");
-  }
-}
-async function firebaseBootstrap(){
-  if(!initFirebase()){
-    setSidebarSync("Solo en este dispositivo","");
-    return;
-  }
-  if(await ensureAnonymousAuth()){
-    setSidebarSync("Sincronizando…","busy");
-    subscribeSharedLibrary();
-  }
 }
 
 
 function persist(){
   localStorage.setItem("mc7_songs",JSON.stringify(songs));
   localStorage.setItem("mc7_reps",JSON.stringify(reps));
-  scheduleFirebaseSave();
+  queueFirebaseSave();
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function toast(msg){const e=document.getElementById("toast");e.textContent=msg;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)}
@@ -668,7 +535,7 @@ function toggleScroll(){if(scrollTimer){clearInterval(scrollTimer);scrollTimer=n
 function toggleStage(){document.body.classList.toggle("stage-mode")}
 
 renderHome();
-firebaseBootstrap();
+initSongbookFirebase();
 </script>
 </body>
 </html>
