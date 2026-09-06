@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.7 Mobile</title>
+<title>Mi Cancionero V8.8 MusicBrainz</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -232,7 +232,7 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
     <button class="nav-btn" data-view="repertoires">☷ Repertorios</button>
     <button class="nav-btn" data-view="search">⌕ Buscar canción</button>
   </nav>
-  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.7 · móvil + búsqueda reparada</div>
+  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.8 · móvil + MusicBrainz</div>
   <div class="aside-foot">Busca automáticamente y pega una cifra completa solo cuando la necesites. Sin configuraciones extra.</div>
 </aside>
 
@@ -493,82 +493,73 @@ async function searchMusic(){
 
   const status=document.getElementById("searchStatus");
   const results=document.getElementById("searchResults");
+
   status.innerHTML=`<div style="padding:16px;text-align:center;color:var(--muted)">Buscando “${esc(term)}”…</div>`;
   results.innerHTML="";
 
-  const base="https://itunes.apple.com/search?media=music&entity=song&limit=16&country=CL&term="+encodeURIComponent(term);
-
   try{
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),8000);
+    // MusicBrainz: búsqueda de grabaciones
+    const url="https://musicbrainz.org/ws/2/recording/?fmt=json&limit=14&query="+encodeURIComponent(term);
 
-    const res=await fetch(base,{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),10000);
+
+    const res=await fetch(url,{
       method:"GET",
       mode:"cors",
       cache:"no-store",
       signal:controller.signal,
-      headers:{Accept:"application/json"}
+      headers:{"Accept":"application/json"}
     });
-    clearTimeout(timeout);
+    clearTimeout(timer);
 
     if(!res.ok)throw new Error("HTTP "+res.status);
+
     const data=await res.json();
-    renderSearchResults((data.results||[]).slice(0,16));
-    return;
+    const recordings=Array.isArray(data.recordings)?data.recordings:[];
+
+    const mapped=recordings.map(rec=>{
+      const artist=(rec["artist-credit"]||[])
+        .map(x=>x.name || x.artist?.name || "")
+        .filter(Boolean).join("");
+
+      const release=(rec.releases||[])[0]||{};
+      const releaseGroup=release["release-group"]||{};
+      const rgid=releaseGroup.id||"";
+
+      const year=(release.date||rec["first-release-date"]||"").slice(0,4);
+      const duration=Math.round((rec.length||0)/1000);
+
+      return {
+        trackName:rec.title||"",
+        artistName:artist||"",
+        collectionName:release.title||releaseGroup.title||"",
+        releaseDate:year?year+"-01-01":"",
+        trackTimeMillis:duration*1000,
+        artworkUrl100:rgid
+          ? "https://coverartarchive.org/release-group/"+rgid+"/front-250"
+          : "",
+        mbid:rec.id||""
+      };
+    }).filter(x=>x.trackName && x.artistName);
+
+    renderSearchResults(mapped);
+
+    if(!mapped.length){
+      status.innerHTML=`<div style="padding:16px;text-align:center;color:var(--muted)">
+        No encontré resultados. Prueba con canción + artista.
+      </div>`;
+    }
   }catch(err){
-    console.warn("Búsqueda fetch falló; probando JSONP",err);
-  }
-
-  // Fallback JSONP para navegadores donde fetch/CORS falle.
-  try{
-    await new Promise((resolve,reject)=>{
-      const cb="itunes_"+Date.now()+"_"+Math.floor(Math.random()*10000);
-      const script=document.createElement("script");
-      let done=false;
-
-      const cleanup=()=>{
-        if(done)return;
-        done=true;
-        try{delete window[cb]}catch(e){}
-        script.remove();
-      };
-
-      const timer=setTimeout(()=>{
-        cleanup();
-        reject(new Error("timeout"));
-      },9000);
-
-      window[cb]=data=>{
-        clearTimeout(timer);
-        try{
-          renderSearchResults((data.results||[]).slice(0,16));
-          cleanup();
-          resolve();
-        }catch(e){
-          cleanup();
-          reject(e);
-        }
-      };
-
-      script.onerror=()=>{
-        clearTimeout(timer);
-        cleanup();
-        reject(new Error("jsonp"));
-      };
-
-      script.src=base+"&callback="+encodeURIComponent(cb);
-      document.head.appendChild(script);
-    });
-  }catch(err){
-    console.warn("Búsqueda JSONP falló",err);
+    console.warn("MusicBrainz search failed",err);
     status.innerHTML=`<div style="padding:16px;text-align:center;color:var(--muted)">
-      No pude conectar con la búsqueda. Revisa tu conexión y vuelve a intentar.
+      La búsqueda musical no respondió. Intenta nuevamente en unos segundos.
     </div>`;
   }
 }
 function renderSearchResults(rs){
  const st=document.getElementById("searchStatus"),box=document.getElementById("searchResults");if(!rs.length){st.innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted)">No encontré resultados.</div>`;box.innerHTML="";return}st.innerHTML="";
- box.innerHTML=rs.map(r=>{const cover=(r.artworkUrl100||"").replace("100x100bb","600x600bb"),year=r.releaseDate?new Date(r.releaseDate).getFullYear():"",duration=Math.round((r.trackTimeMillis||0)/1000);const p=encodeURIComponent(JSON.stringify({title:r.trackName||"",artist:r.artistName||"",album:r.collectionName||"",year,cover,duration}));return `<article class="result"><img src="${esc(cover||placeholderCover)}"><div><div class="result-title">${esc(r.trackName)}</div><div class="result-meta">${esc(r.artistName)}<br>${esc(r.collectionName||"")}${year?` · ${year}`:""}</div></div><button class="primary" onclick="addResult('${p}')">Agregar</button></article>`}).join("")
+ box.innerHTML=rs.map(r=>{const cover=(r.artworkUrl100||"").replace("100x100bb","600x600bb"),year=r.releaseDate?new Date(r.releaseDate).getFullYear():"",duration=Math.round((r.trackTimeMillis||0)/1000);const p=encodeURIComponent(JSON.stringify({title:r.trackName||"",artist:r.artistName||"",album:r.collectionName||"",year,cover,duration}));return `<article class="result"><img src="${esc(cover||placeholderCover)}" onerror="this.onerror=null;this.src='${esc(placeholderCover)}'"><div><div class="result-title">${esc(r.trackName)}</div><div class="result-meta">${esc(r.artistName)}<br>${esc(r.collectionName||"")}${year?` · ${year}`:""}</div></div><button class="primary" onclick="addResult('${p}')">Agregar</button></article>`}).join("")
 }
 async function addResult(p){
  const d=JSON.parse(decodeURIComponent(p));let s=songs.find(x=>x.title===d.title&&x.artist===d.artist&&x.album===d.album);
