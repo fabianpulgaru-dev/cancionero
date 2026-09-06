@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.3 Firebase Compartido</title>
+<title>Mi Cancionero V8.4 EE12026</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -91,7 +91,6 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 
 </head>
@@ -207,17 +206,16 @@ let currentSong=null,currentFont=19,scrollTimer=null,mode="lyrics";
 // FIREBASE — proyecto existente
 // ===============================
 const firebaseConfig = {
-  apiKey: "AIzaSyDPkx9sbI7FQEEp1ime-C7sICosbblYqAE",
-  authDomain: "investigaciones-d4262.firebaseapp.com",
-  databaseURL: "https://investigaciones-d4262-default-rtdb.firebaseio.com",
-  projectId: "investigaciones-d4262",
-  storageBucket: "investigaciones-d4262.firebasestorage.app",
-  messagingSenderId: "155295863127",
-  appId: "1:155295863127:web:3cb65a4247ef17e30b2e12"
+  apiKey: "AIzaSyDBlLHG_SDpGBboHlm3JjVd09Qx-qzAZkI",
+  authDomain: "ee12026-f5e3d.firebaseapp.com",
+  databaseURL: "https://ee12026-f5e3d-default-rtdb.firebaseio.com",
+  projectId: "ee12026-f5e3d",
+  storageBucket: "ee12026-f5e3d.firebasestorage.app",
+  messagingSenderId: "756349145887",
+  appId: "1:756349145887:web:6498233c2e0aac81a6962a"
 };
 
 let firebaseDb=null;
-let firebaseAuth=null;
 let songbookRef=null;
 let firebaseReady=false;
 let applyingRemote=false;
@@ -234,51 +232,42 @@ function initSongbookFirebase(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     firebaseDb=firebase.database();
-    firebaseAuth=firebase.auth();
 
-    firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
-    setCloudState("Conectando Firebase…","busy");
+    // Ruta aislada: no toca Atelier ni otras apps.
+    songbookRef=firebaseDb.ref("sharedSongbook/main");
 
-    const beginSync=()=>{
-      songbookRef=firebaseDb.ref("sharedSongbook/main");
-      setCloudState("Sincronizando…","busy");
+    setCloudState("Sincronizando…","busy");
 
-      songbookRef.once("value").then(snap=>{
-        if(snap.exists()){
-          applyRemoteLibrary(snap.val());
-        }else{
-          firebaseReady=true;
-          saveLibraryToFirebase(true);
-        }
-
-        firebaseReady=true;
-        setCloudState("Nube conectada","ok");
-
-        songbookRef.on("value",remoteSnap=>{
-          if(!remoteSnap.exists() || applyingRemote)return;
-          const data=remoteSnap.val();
-          const remoteStamp=Number(data?.updatedAt||0);
-          if(remoteStamp && remoteStamp===lastRemoteUpdatedAt)return;
-          applyRemoteLibrary(data);
-        },err=>{
-          console.warn("Firebase listener",err);
-          setCloudState("Error de sincronización","bad");
-        });
-      }).catch(err=>{
-        console.warn("Firebase initial read",err);
-        setCloudState("Firebase bloqueado por reglas","bad");
-      });
-    };
-
-    firebaseAuth.onAuthStateChanged(user=>{
-      if(user){
-        beginSync();
+    // Primera carga: si existe nube, manda la nube.
+    // Si está vacía, sube automáticamente la biblioteca local.
+    songbookRef.once("value").then(snap=>{
+      if(snap.exists()){
+        applyRemoteLibrary(snap.val());
       }else{
-        firebaseAuth.signInAnonymously().catch(err=>{
-          console.warn("Anonymous auth failed",err);
-          setCloudState("Activa acceso anónimo en Firebase","bad");
-        });
+        firebaseReady=true;
+        saveLibraryToFirebase(true);
       }
+
+      firebaseReady=true;
+      setCloudState("Nube conectada","ok");
+
+      // Cambios en tiempo real desde cualquiera de los dispositivos.
+      songbookRef.on("value",remoteSnap=>{
+        if(!remoteSnap.exists() || applyingRemote)return;
+        const data=remoteSnap.val();
+        const remoteStamp=Number(data?.updatedAt||0);
+
+        // Ignorar ecos de la misma escritura.
+        if(remoteStamp && remoteStamp===lastRemoteUpdatedAt)return;
+
+        applyRemoteLibrary(data);
+      },err=>{
+        console.warn("Firebase listener",err);
+        setCloudState("Error de sincronización","bad");
+      });
+    }).catch(err=>{
+      console.warn("Firebase initial read",err);
+      setCloudState("Firebase bloqueado por reglas","bad");
     });
 
   }catch(err){
@@ -286,6 +275,7 @@ function initSongbookFirebase(){
     setCloudState("Sin conexión a Firebase","bad");
   }
 }
+
 function applyRemoteLibrary(data){
   if(!data)return;
   applyingRemote=true;
