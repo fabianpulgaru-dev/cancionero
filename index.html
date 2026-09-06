@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.8 MusicBrainz</title>
+<title>Mi Cancionero V8.9 Repertorios</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -216,6 +216,24 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
   .nav-btn{font-size:10px;padding:8px 2px}
 }
 
+
+.danger-btn{color:#a64a38!important;border-color:rgba(166,74,56,.28)!important}
+.danger-btn:hover{background:#fff0eb!important}
+.rep-song-list{display:grid;gap:10px}
+.rep-song-row{display:grid;grid-template-columns:34px 64px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:16px}
+.rep-song-row img{width:64px;height:64px;object-fit:cover;border-radius:11px}
+.rep-song-num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--soft-blue);font-size:12px;font-weight:900;color:var(--petrol)}
+.rep-song-info{min-width:0}.rep-song-info strong{display:block;font-size:15px;line-height:1.2}.rep-song-info small{display:block;margin-top:4px;color:var(--muted);font-size:12px;line-height:1.3}
+.rep-song-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:700px){
+  .rep-song-row{grid-template-columns:26px 52px minmax(0,1fr);gap:9px;padding:9px}
+  .rep-song-row img{width:52px;height:52px;border-radius:9px}
+  .rep-song-num{width:24px;height:24px;font-size:10px}
+  .rep-song-info strong{font-size:13px}.rep-song-info small{font-size:10px}
+  .rep-song-actions{grid-column:2/4;justify-content:flex-start;margin-top:2px}
+  .rep-song-actions button{font-size:11px!important;padding:7px 9px!important}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -232,7 +250,7 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
     <button class="nav-btn" data-view="repertoires">☷ Repertorios</button>
     <button class="nav-btn" data-view="search">⌕ Buscar canción</button>
   </nav>
-  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.8 · móvil + MusicBrainz</div>
+  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.9 · repertorios + eliminar</div>
   <div class="aside-foot">Busca automáticamente y pega una cifra completa solo cuando la necesites. Sin configuraciones extra.</div>
 </aside>
 
@@ -276,8 +294,21 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
 </section>
 
 <section id="repertoires" class="view">
-  <div class="topbar"><div><div class="eyebrow">Repertorios</div><h2>Arma tus sets</h2></div><button class="primary" onclick="newRep()">Nuevo repertorio</button></div>
-  <div id="repList" class="rep-list"></div>
+  <div id="repOverview">
+    <div class="topbar"><div><div class="eyebrow">Repertorios</div><h2>Arma tus sets</h2></div><button class="primary" onclick="newRep()">Nuevo repertorio</button></div>
+    <div id="repList" class="rep-list"></div>
+  </div>
+  <div id="repDetail" style="display:none">
+    <div class="topbar">
+      <div>
+        <button class="ghost" onclick="closeRepDetail()" style="margin-bottom:10px">← Repertorios</button>
+        <div class="eyebrow">Repertorio</div>
+        <h2 id="repDetailTitle">Repertorio</h2>
+        <div id="repDetailMeta" class="subtitle"></div>
+      </div>
+    </div>
+    <div id="repSongList" class="rep-song-list"></div>
+  </div>
 </section>
 
 <section id="player" class="view">
@@ -328,7 +359,7 @@ Texto de la canción…"></textarea>
 const placeholderCover="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="#ebe6dc"/><circle cx="150" cy="150" r="72" fill="#15636b" opacity=".12"/><text x="150" y="175" text-anchor="middle" font-size="86" font-family="Arial" fill="#15636b">♪</text></svg>`);
 let songs=JSON.parse(localStorage.getItem("mc7_songs")||"[]");
 let reps=JSON.parse(localStorage.getItem("mc7_reps")||"[]");
-let currentSong=null,currentFont=19,scrollTimer=null,mode="lyrics";
+let currentSong=null,currentFont=19,scrollTimer=null,mode="lyrics",currentRepId=null;
 
 // ===============================
 // FIREBASE — proyecto existente
@@ -471,19 +502,62 @@ function go(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove(
 document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>go(b.dataset.view)));
 
 function songCard(s){
- return `<article class="card"><div class="song-card"><img class="cover" src="${esc(s.cover||placeholderCover)}"><div class="song-info">
+ return `<article class="card"><div class="song-card"><img class="cover" src="${esc(s.cover||placeholderCover)}" onerror="this.onerror=null;this.src='${esc(placeholderCover)}'"><div class="song-info">
  <div class="song-title">${esc(s.title)}</div><div class="song-artist">${esc(s.artist)}</div><div class="song-album">${esc(s.album||"")}${s.year?` · ${esc(s.year)}`:""}</div>
  <div class="badges">${s.chart?`<span class="badge b-chords">Acordes listos</span>`:s.lyrics?`<span class="badge b-lyrics">Letra lista</span>`:`<span class="badge b-auto">Ficha lista</span>`}${s.key?`<span class="badge b-tone">Tono ${esc(s.key)}</span>`:""}</div>
- <div class="song-actions"><button class="primary" onclick="openSong('${s.id}')">Tocar</button><button class="ghost" onclick="addToRep('${s.id}')">＋ Repertorio</button></div>
+ <div class="song-actions"><button class="primary" onclick="openSong('${s.id}')">Tocar</button><button class="ghost" onclick="addToRep('${s.id}')">＋ Repertorio</button><button class="ghost danger-btn" onclick="deleteSong('${s.id}')">Eliminar</button></div>
  </div></div></article>`
 }
 function renderHome(){document.getElementById("recentSongs").innerHTML=songs.length?songs.slice(-3).reverse().map(songCard).join(""):`<div class="card">Todavía no has agregado canciones.</div>`}
 function renderLibrary(){const q=(document.getElementById("librarySearch")?.value||"").toLowerCase(),f=document.getElementById("libraryFilter")?.value||"all";const list=songs.filter(s=>(!q||`${s.title} ${s.artist} ${s.album}`.toLowerCase().includes(q))&&(f==="all"||(f==="chords"&&s.chart)||(f==="lyrics"&&s.lyrics&&!s.chart)));document.getElementById("libraryGrid").innerHTML=list.length?list.map(songCard).join(""):`<div class="card">No encontré canciones.</div>`}
 function repRow(r){return `<div class="rep"><div><strong>${esc(r.name)}</strong><br><small>${r.songIds.length} canciones</small></div><button class="ghost" onclick="openRep('${r.id}')">Abrir</button></div>`}
-function renderReps(){document.getElementById("repList").innerHTML=reps.length?reps.map(repRow).join(""):`<div class="card">Todavía no tienes repertorios.</div>`}
-function newRep(){const n=prompt("Nombre del repertorio:");if(!n)return;reps.push({id:crypto.randomUUID(),name:n,songIds:[]});persist();renderReps()}
-function addToRep(id){if(!reps.length){newRep();if(!reps.length)return}const opts=reps.map((r,i)=>`${i+1}. ${r.name}`).join("\n");const n=Number(prompt(`¿A cuál repertorio?\n${opts}`))-1;if(n<0||n>=reps.length)return;if(!reps[n].songIds.includes(id))reps[n].songIds.push(id);persist();toast("Agregada al repertorio")}
-function openRep(id){const r=reps.find(x=>x.id===id);if(!r||!r.songIds.length){toast("Repertorio vacío");return}const s=songs.find(x=>x.id===r.songIds[0]);if(s)openSong(s.id)}
+function renderReps(){
+  document.getElementById("repList").innerHTML=reps.length?reps.map(repRow).join(""):`<div class="card">Todavía no tienes repertorios.</div>`;
+  if(currentRepId)renderRepDetail();
+}
+function openRep(id){
+  currentRepId=id;
+  document.getElementById("repOverview").style.display="none";
+  document.getElementById("repDetail").style.display="block";
+  renderRepDetail();
+}
+function closeRepDetail(){
+  currentRepId=null;
+  document.getElementById("repDetail").style.display="none";
+  document.getElementById("repOverview").style.display="block";
+  renderReps();
+}
+function renderRepDetail(){
+  const r=reps.find(x=>x.id===currentRepId);
+  if(!r){closeRepDetail();return}
+  document.getElementById("repDetailTitle").textContent=r.name;
+  const validSongs=r.songIds.map(id=>songs.find(s=>s.id===id)).filter(Boolean);
+  document.getElementById("repDetailMeta").textContent=validSongs.length===1?"1 canción":`${validSongs.length} canciones`;
+  document.getElementById("repSongList").innerHTML=validSongs.length?validSongs.map((s,i)=>`
+    <article class="rep-song-row">
+      <div class="rep-song-num">${i+1}</div>
+      <img src="${esc(s.cover||placeholderCover)}" onerror="this.onerror=null;this.src='${esc(placeholderCover)}'">
+      <div class="rep-song-info"><strong>${esc(s.title)}</strong><small>${esc(s.artist)}${s.album?` · ${esc(s.album)}`:""}</small></div>
+      <div class="rep-song-actions"><button class="primary" onclick="openSong('${s.id}')">Tocar</button><button class="ghost" onclick="removeSongFromRep('${r.id}','${s.id}')">Quitar</button></div>
+    </article>`).join(""):`<div class="card">Este repertorio todavía está vacío.</div>`;
+}
+function removeSongFromRep(repId,songId){
+  const r=reps.find(x=>x.id===repId);if(!r)return;
+  r.songIds=r.songIds.filter(id=>id!==songId);
+  persist();renderRepDetail();renderReps();toast("Canción quitada del repertorio");
+}
+function deleteSong(id){
+  const s=songs.find(x=>x.id===id);if(!s)return;
+  if(!confirm(`¿Eliminar “${s.title}” de la biblioteca?
+
+También se quitará de todos los repertorios.`))return;
+  songs=songs.filter(x=>x.id!==id);
+  reps.forEach(r=>r.songIds=r.songIds.filter(songId=>songId!==id));
+  if(currentSong?.id===id)currentSong=null;
+  persist();renderLibrary();renderHome();renderReps();
+  if(currentRepId)renderRepDetail();
+  toast("Canción eliminada");
+}const s=songs.find(x=>x.id===r.songIds[0]);if(s)openSong(s.id)}
 
 function searchFromHome(){const q=document.getElementById("homeSearch").value.trim();go("search");document.getElementById("externalSearch").value=q;if(q)searchMusic()}
 async function searchMusic(){
@@ -789,7 +863,7 @@ function renderPlayer(){
  const s=currentSong;if(!s)return;
  document.getElementById("pCover").src=s.cover||placeholderCover;document.getElementById("pTitle").textContent=s.title;document.getElementById("pArtist").textContent=[s.artist,s.album,s.year].filter(Boolean).join(" · ");
  document.getElementById("pBadges").innerHTML=`${s.chart?`<span class="badge b-chords">Acordes listos</span>`:s.lyrics?`<span class="badge b-lyrics">Letra lista</span>`:`<span class="badge b-auto">Ficha lista</span>`}${s.key?`<span class="badge b-tone">Tono probable ${esc(transposeChord(s.key,s.shift||0))}</span>`:""}`;
- document.getElementById("playerControls").innerHTML=s.chart?`<button class="icon-btn" onclick="transposeChart(-1)">♭</button><button class="icon-btn" onclick="transposeChart(1)">♯</button><button class="icon-btn" onclick="fontSize(-1)">A−</button><button class="icon-btn" onclick="fontSize(1)">A+</button><button class="ghost" onclick="openInlineEditor()">Editar</button><button class="icon-btn" onclick="toggleScroll()">⇣ Auto</button><button class="primary" onclick="toggleStage()">Modo escenario</button>`:`<button class="icon-btn" onclick="fontSize(-1)">A−</button><button class="icon-btn" onclick="fontSize(1)">A+</button><button class="ghost" onclick="openInlineEditor()">Editar</button><button class="primary" onclick="toggleStage()">Modo escenario</button>`;
+ document.getElementById("playerControls").innerHTML=s.chart?`<button class="icon-btn" onclick="transposeChart(-1)">♭</button><button class="icon-btn" onclick="transposeChart(1)">♯</button><button class="icon-btn" onclick="fontSize(-1)">A−</button><button class="icon-btn" onclick="fontSize(1)">A+</button><button class="ghost" onclick="openInlineEditor()">Editar</button><button class="ghost danger-btn" onclick="deleteSong(currentSong.id)">Eliminar</button><button class="icon-btn" onclick="toggleScroll()">⇣ Auto</button><button class="primary" onclick="toggleStage()">Modo escenario</button>`:`<button class="icon-btn" onclick="fontSize(-1)">A−</button><button class="icon-btn" onclick="fontSize(1)">A+</button><button class="ghost" onclick="openInlineEditor()">Editar</button><button class="ghost danger-btn" onclick="deleteSong(currentSong.id)">Eliminar</button><button class="primary" onclick="toggleStage()">Modo escenario</button>`;
  const tabs=[];if(s.lyrics)tabs.push(["lyrics","Letra"]);if(s.chart)tabs.push(["chart","Letra + acordes"]);
  if(!tabs.some(x=>x[0]===mode))mode=tabs[0]?.[0]||"lyrics";
  document.getElementById("modeTabs").innerHTML=tabs.map(([id,label])=>`<button class="tab ${mode===id?"active":""}" onclick="setMode('${id}')">${label}</button>`).join("");
