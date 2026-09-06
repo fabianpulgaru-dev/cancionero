@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero V8.9 Repertorios</title>
+<title>Mi Cancionero V8.9.1 Reparado</title>
 <style>
 :root{
   --bg:#f6f2e9;--paper:#fffdf8;--ink:#20282b;--muted:#70797c;--line:#ddd7cc;
@@ -250,7 +250,7 @@ body.stage-mode .app{display:block}body.stage-mode main{padding:18px;max-width:1
     <button class="nav-btn" data-view="repertoires">☷ Repertorios</button>
     <button class="nav-btn" data-view="search">⌕ Buscar canción</button>
   </nav>
-  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.9 · repertorios + eliminar</div>
+  <div id="cloudState" class="cloud-state"><span class="cloud-dot busy"></span><span>Conectando Firebase…</span></div><div style="margin-top:7px;font-size:10px;color:var(--muted);font-weight:800">V8.9.1 · reparado</div>
   <div class="aside-foot">Busca automáticamente y pega una cifra completa solo cuando la necesites. Sin configuraciones extra.</div>
 </aside>
 
@@ -557,7 +557,7 @@ También se quitará de todos los repertorios.`))return;
   persist();renderLibrary();renderHome();renderReps();
   if(currentRepId)renderRepDetail();
   toast("Canción eliminada");
-}const s=songs.find(x=>x.id===r.songIds[0]);if(s)openSong(s.id)}
+}
 
 function searchFromHome(){const q=document.getElementById("homeSearch").value.trim();go("search");document.getElementById("externalSearch").value=q;if(q)searchMusic()}
 async function searchMusic(){
